@@ -9,15 +9,20 @@ using System.Windows.Forms;
 using System.Net;
 using System.Net.Sockets;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Diagnostics.Eventing.Reader;
 
 namespace ClienteProyecto
 {
     public partial class Form1 : Form
     {
         Socket server;
+        public bool sesion;
         public Form1()
         {
             InitializeComponent();
+            LogOut.Visible = false;
+            Log.Visible = true;
+            sesion = false;
         }
 
         public void Conn_Click(object sender, EventArgs e)
@@ -25,7 +30,7 @@ namespace ClienteProyecto
             //Creamos un IPEndPoint con el ip del servidor y puerto del servidor 
             //al que deseamos conectarnos
             IPAddress direc = IPAddress.Parse("192.168.56.102");
-            IPEndPoint ipep = new IPEndPoint(direc, 9030);
+            IPEndPoint ipep = new IPEndPoint(direc, 9010);
 
 
             //Creamos el socket 
@@ -62,7 +67,7 @@ namespace ClienteProyecto
 
         private void Log_Click(object sender, EventArgs e)
         {
-            LogInInterf logInInterf = new LogInInterf();
+            LogInInterf logInInterf = new LogInInterf(this);
             logInInterf.ShowDialog();
         }
 
@@ -74,15 +79,32 @@ namespace ClienteProyecto
 
         private void Consultar_Click(object sender, EventArgs e)
         {
-            string mensaje = "3/";
-            // Enviamos al servidor el nombre tecleado
-            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
-            server.Send(msg);
+            if (sesion == true)
+            {
+                string mensaje = "3/" + nickConsBox.Text;
+                // Enviamos al servidor el nombre tecleado
+                byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+                server.Send(msg);
 
-            //Recibimos la respuesta del servidor
-            byte[] msg2 = new byte[80];
-            server.Receive(msg2);
-            mensaje = Encoding.ASCII.GetString(msg2).Split('\0')[0];
+                //Recibimos la respuesta del servidor
+                byte[] msg2 = new byte[80];
+                server.Receive(msg2);
+                mensaje = Encoding.ASCII.GetString(msg2).Split('\0')[0];
+
+                if (mensaje == "2")
+                {
+                    MessageBox.Show("Nombre no econtrado en la base de datos.");
+                }
+                else
+                {
+                    nickConsBox.Text = "";
+                    MessageBox.Show(mensaje);
+                }
+            }
+            else
+            {
+                MessageBox.Show("Sesión no iniciada.");
+            }
         }
 
         private void Salir_Click(object sender, EventArgs e)
@@ -90,7 +112,7 @@ namespace ClienteProyecto
             this.Close();
         }
 
-        public void Registrarse(string nick, string pass)
+        public int Registrarse(string nick, string pass)
         {
             string mensaje = "1/" + nick + "/" + pass;
             // Enviamos al servidor el nombre tecleado
@@ -102,7 +124,18 @@ namespace ClienteProyecto
             server.Receive(msg2);
             mensaje = Encoding.ASCII.GetString(msg2).Split('\0')[0];
 
-            MessageBox.Show(mensaje);
+            if (mensaje == "1")
+            {
+                return 1;
+            }
+            else if (mensaje == "2")
+            {
+                return 2;
+            }
+            else
+            {
+                return 3;
+            }
 
         }
         public int LogIn(string nick, string pass)
@@ -117,7 +150,32 @@ namespace ClienteProyecto
             server.Receive(msg2);
             mensaje = Encoding.ASCII.GetString(msg2).Split('\0')[0];
 
-            return 1;
+            if (mensaje == "1")
+            {
+                Nickname_player.Text = nick;
+                LogOut.Visible = true;
+                Log.Visible = false;
+                Sign.Visible = false;
+                sesion = true;
+                return 1;
+            }
+            else if (mensaje == "2")
+            {
+                return 2;
+            }
+            else
+            {
+                return 3;
+            }
+        }
+
+        private void LogOut_Click(object sender, EventArgs e)
+        {
+            Nickname_player.Text = null;
+            LogOut.Visible = false;
+            Log.Visible = true;
+            Sign.Visible = true;
+            sesion = false;
         }
     }
 }

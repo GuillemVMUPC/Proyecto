@@ -14,9 +14,10 @@ namespace ClienteProyecto
     public partial class LogInInterf : Form
     {
         private Form1 form1;
-        public LogInInterf()
+        public LogInInterf(Form1 mainform)
         {
             InitializeComponent();
+            form1 = mainform;
         }
 
         private void Enviar_Click_1(object sender, EventArgs e)

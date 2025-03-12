@@ -33,12 +33,12 @@
             panel1 = new Panel();
             Sign = new Button();
             Log = new Button();
-            Nick = new Label();
-            ID_player = new Label();
+            Nickname_player = new Label();
             Consultar = new Button();
             Salir = new Button();
             nickConsBox = new TextBox();
             label1 = new Label();
+            LogOut = new Button();
             SuspendLayout();
             // 
             // Conn
@@ -81,7 +81,7 @@
             // 
             // Log
             // 
-            Log.Location = new Point(610, 12);
+            Log.Location = new Point(610, 13);
             Log.Name = "Log";
             Log.Size = new Size(88, 34);
             Log.TabIndex = 1;
@@ -89,23 +89,14 @@
             Log.UseVisualStyleBackColor = true;
             Log.Click += Log_Click;
             // 
-            // Nick
+            // Nickname_player
             // 
-            Nick.AutoSize = true;
-            Nick.Location = new Point(578, 416);
-            Nick.Name = "Nick";
-            Nick.Size = new Size(59, 25);
-            Nick.TabIndex = 3;
-            Nick.Text = "label1";
-            // 
-            // ID_player
-            // 
-            ID_player.AutoSize = true;
-            ID_player.Location = new Point(687, 416);
-            ID_player.Name = "ID_player";
-            ID_player.Size = new Size(59, 25);
-            ID_player.TabIndex = 4;
-            ID_player.Text = "label1";
+            Nickname_player.AutoSize = true;
+            Nickname_player.Location = new Point(687, 416);
+            Nickname_player.Name = "Nickname_player";
+            Nickname_player.Size = new Size(59, 25);
+            Nickname_player.TabIndex = 4;
+            Nickname_player.Text = "label1";
             // 
             // Consultar
             // 
@@ -143,6 +134,16 @@
             label1.TabIndex = 8;
             label1.Text = "Nickname:";
             // 
+            // LogOut
+            // 
+            LogOut.Location = new Point(704, 12);
+            LogOut.Name = "LogOut";
+            LogOut.Size = new Size(88, 34);
+            LogOut.TabIndex = 9;
+            LogOut.Text = "Log Out";
+            LogOut.UseVisualStyleBackColor = true;
+            LogOut.Click += LogOut_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
@@ -152,13 +153,13 @@
             Controls.Add(nickConsBox);
             Controls.Add(Salir);
             Controls.Add(Consultar);
-            Controls.Add(ID_player);
-            Controls.Add(Nick);
+            Controls.Add(Nickname_player);
             Controls.Add(Sign);
             Controls.Add(Log);
             Controls.Add(panel1);
             Controls.Add(Conn);
             Controls.Add(Desconn);
+            Controls.Add(LogOut);
             Name = "Form1";
             Text = "Form1";
             ResumeLayout(false);
@@ -173,10 +174,11 @@
         private Button Sign;
         private Button Log;
         private Label Nick;
-        private Label ID_player;
+        private Label Nickname_player;
         private Button Consultar;
         private Button Salir;
         private TextBox nickConsBox;
         private Label label1;
+        private Button LogOut;
     }
 }

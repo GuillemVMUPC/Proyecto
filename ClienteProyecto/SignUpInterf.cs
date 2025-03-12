@@ -30,8 +30,8 @@ namespace ClienteProyecto
             {
                 try
                 {
-                    form1.Registrarse(nickBox.Text, passBox.Text);
-                    int compl = 1;
+                    int compl = form1.Registrarse(nickBox.Text, passBox.Text);
+                     
                     if(compl == 1)
                     {
                         MessageBox.Show("Registro completado.");
@@ -44,13 +44,11 @@ namespace ClienteProyecto
                     else 
                     {
                         MessageBox.Show("Error al registrarse.");
-                        return;
                     }
                 }
                 catch 
                 {
                     MessageBox.Show("Error al registrarse.");
-                    return;
                 }
             }
         }
