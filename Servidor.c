@@ -17,11 +17,11 @@ int main(int argc, char *argv[])
 	char peticion[512];
 	// INICIALITZACIONS
 	// Obrim el socket
-	close(sock_conn);
 	if ((sock_listen = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+	{
 		printf("Error creant socket");
+	}
 	// Fem el bind al port
-	
 	
 	memset(&serv_adr, 0, sizeof(serv_adr));// inicialitza a zero serv_addr
 	serv_adr.sin_family = AF_INET;
@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
 	//htonl formatea el numero que recibe al formato necesario
 	serv_adr.sin_addr.s_addr = htonl(INADDR_ANY);
 	// establecemos el puerto de escucha
-	serv_adr.sin_port = htons(9010);
+	serv_adr.sin_port = htons(9130);
 	
 	if (bind(sock_listen, (struct sockaddr *) &serv_adr, sizeof(serv_adr)) < 0)
 	{
@@ -72,21 +72,26 @@ int main(int argc, char *argv[])
 			int codigo =  atoi (p);
 			// Ya tenemos el c?digo de la petici?n	
 			
+			
 			char nick[25];
 			char pass[10];
 			char respt[100];
+			// variables temporales para guardar datos
 			
 			if (codigo ==0) //petici?n de desconexi?n
 			{	
 				terminar=1;
 			}
-			else if (codigo ==1) //piden la longitd del nombre
+			else if (codigo ==1)
 			{
+				//funcion de registro de player
 				p = strtok( NULL, "/");
 				strcpy (nick, p);
 				Consulta(respt,nick, codigo);
+				//consulta si el nickname proporcionado esta en uso o no
 				if(respt != NULL && respt[0] != '\0')
 				{
+					//si no esta en uso crea uno de nuevo junto a la password proporcionada
 					p = strtok( NULL, "/");
 					strcpy (pass, p);
 					Add(nick,pass,respt);
@@ -94,43 +99,54 @@ int main(int argc, char *argv[])
 				}
 				else
 				{
+					//si esta en uso notifica con un 2 para informarle al usuario
 					strcpy(respuesta, "2");
 				}
 			}
 			else if (codigo ==2)
 			{
+				//funcion para iniciar sesion en el juego
 				p = strtok( NULL, "/");
 				strcpy (nick, p);
 				Consulta(respt, nick, codigo);
+				//consulta que el nickname se encuentre en la base de datos y devuelve la contraseña
 				if(respt == NULL || respt[0] == '\0')
 				{
+					//nickname no encontrado en la base
 					strcpy(respuesta, "2");
 				}
 				else
 				{
+					//en caso de que este en la base de datos
 					p = strtok( NULL, "/");
 					strcpy (pass, p);
 					if(strcmp(pass,respt)==0)
 					{
+						//devuelve 1 si la password esta asociada a ese nickname
 						strcpy(respuesta, "1");
 					}
 					else
 					{
+						//devuelve 3 si la password no es la asociada al nickname
 						strcpy(respuesta, "3");
 					}
 				}
 			}
 			else if (codigo ==3)
 			{
+				//funcion de consulta
 				p = strtok( NULL, "/");
 				strcpy (nick, p);
 				Consulta(respt, nick, codigo);
+				//recoge todos los datos del usuario
 				if(respt != NULL || respt[0] != '\0')
 				{
+					//envia al cliente los datos asociados a ese nickname
 					strcpy(respuesta,respt);
 				}
 				else
 				{
+					//envia un 2 si no se ha encontrado al usuario en la base de datos
 					strcpy(respuesta, "2");
 				}
 			}			
@@ -154,15 +170,12 @@ void Consulta(char* respt, char nick[25], int tipo)
 	MYSQL_RES *resultado;
 	MYSQL_ROW row;
 	
-	int Last_Log;
-	float Total_Score;
 	char ID_player[10];
 	char Nickname[25];
 	char Password[10];
 	
 	char consulta [80];
 	
-	int tot;
 	
 	//Creamos una conexion al servidor MYSQL
 	conn = mysql_init(NULL);
@@ -180,18 +193,21 @@ void Consulta(char* respt, char nick[25], int tipo)
 	strcpy(Nickname,nick);
 	if(tipo==1)
 	{
+		//cuando se hace la funcion de consulta llamada desde la funcion de registrarse del cliente
 		strcpy (consulta,"SELECT Nickname FROM DB_players WHERE Nickname = '");
 		strcat (consulta, Nickname);
 		strcat (consulta,"'");
 	}
 	else if(tipo==2)
 	{
+		//cuando se hace la funcion de consulta llamada desde la funcion de log in del cliente
 		strcpy (consulta,"SELECT Nickname, Password FROM DB_players WHERE Nickname = '");
 		strcat (consulta, Nickname);
 		strcat (consulta,"'");
 	}
 	else if(tipo==3)
 	{
+		//cuando se hace la funcion de consulta llamada desde la funcion de log in del cliente
 		strcpy (consulta,"SELECT * FROM DB_players WHERE Nickname = '");
 		strcat (consulta, Nickname);
 		strcat (consulta,"'");
@@ -220,14 +236,16 @@ void Consulta(char* respt, char nick[25], int tipo)
 	{
 		if(tipo==1)
 		{
+			//notifica a la funcion de registrarse de que no hay ningun usuario con el nickname dado y se proporciona el numero de jugadores
+			//dentro de la base de datis para poder asignar la ID de player
 			mysql_query(conn,"SELECT COUNT(*) AS total FROM DB_players");
 			resultado = mysql_store_result (conn);
 			row = mysql_fetch_row (resultado);
-			tot = atoi(row[0]);
-			sprintf(respt,"%d",tot);
+			sprintf(respt,"%d",atoi(row[0]));
 		}
 		else if(tipo==2 || tipo==3)
 		{
+			//notifica tanto a la funcion de log in y consultar de que el nickname dado no se encuentra en la base de datos
 			respt[0] = NULL;
 		}
 	}
@@ -237,19 +255,24 @@ void Consulta(char* respt, char nick[25], int tipo)
 		{
 			if(tipo==1)
 			{
+				//notifica a la funcion de registrarse de que el nickname dado esta siendo usado por otro player
 				respt[0] = NULL;
-				row = mysql_fetch_row (resultado);
 			}
 			else if(tipo==2)
 			{
+				//notifica a la funcion de log in de que el nickname dado se encuentra en la base de datos y proporciona la Password
+				//asociada a ese nickname
 				strcpy(respt,row[1]);
-				row = mysql_fetch_row (resultado);
 			}
 			if(tipo==3)
 			{
-				sprintf(respt,"%s/%s/%s/%f/%d",row[0],row[1],row[2],row[3],row[4]);
-				row = mysql_fetch_row (resultado);
+				//notifica a la funcion de consulta de que el nickname dado se encuentra en la base de datos y devuelve todos los datos
+				//de ese player
+				printf("Valor de row[4]: %s\n", row[4]);  // Para verificar el valor de la cadena
+				
+				sprintf(respt,"ID PLyaer: %s/Nickname: %s/Password: %s/Total Score: %f/Last Log: %s",row[0],row[1],row[2],row[3],row[4]);
 			}
+			row = mysql_fetch_row (resultado);
 		}
 	}
 	mysql_close (conn);
@@ -274,8 +297,6 @@ int Add(char nick[25], char pass[10], char* respt)
 	int Last_Log;
 	char Last_Logs[3];
 	
-	int i;
-	
 	char consulta [80];
 	
 	//Creamos una conexion al servidor MYSQL
@@ -294,32 +315,14 @@ int Add(char nick[25], char pass[10], char* respt)
 		printf ("Error al inicializar la conexion: %u %s\n",mysql_errno(conn), mysql_error(conn));
 		exit (1);
 	}
-	//Introduciremos en la base de datos 4 personas,
-	//cuyos datos pedimos al usuario
-	// Ahora construimos el string con el comando SQL
-	// para insertar la persona en la base. Ese string es:
-	// INSERT INTO personas VALUES ('dni', 'nombre', edad);
+	
 	strcpy(ID_player,respt);
 	strcpy(Nickname,nick);
 	strcpy(Password,pass);
+	//copia en las variables temporales los datos proporcionados a la funcion Add()
 	
-	strcpy (consulta, "INSERT INTO DB_players VALUES ('");
-	//concatenamos el dni
-	strcat (consulta, ID_player);
-	strcat (consulta, "','");
-	//concatenamos el nombre
-	strcat (consulta, Nickname);
-	strcat (consulta, "','");
-	strcat (consulta, Password);
-	strcat (consulta, "',");
-	//convertimos la edad en un string y lo concatenamos
-	sprintf(Total_Scores, "%f", Total_Score);
-	strcat (consulta, Total_Scores);
-	strcat (consulta, ",");
-	sprintf(Last_Logs, "%d", Last_Log);
-	strcat (consulta, Last_Logs);
-	strcat (consulta, ");");
-	//concatenamos el dni
+	snprintf(consulta, sizeof(consulta),"INSERT INTO DB_players VALUES ('%s', '%s', '%s', %f, %d);",ID_player, Nickname, Password, Total_Score, Last_Log);
+	//registra unn nuevo player
 	printf("consulta = %s\n", consulta);
 	// Ahora ya podemos realizar la insercion
 	err = mysql_query(conn, consulta);
@@ -327,7 +330,6 @@ int Add(char nick[25], char pass[10], char* respt)
 	{
 		printf ("Error al introducir datos la base %u %s\n", mysql_errno(conn), mysql_error(conn));
 		exit (1);
-		
 	}
 	// cerrar la conexion con el servidor MYSQL
 	mysql_close (conn);

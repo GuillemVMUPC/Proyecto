@@ -30,7 +30,7 @@ namespace ClienteProyecto
             //Creamos un IPEndPoint con el ip del servidor y puerto del servidor 
             //al que deseamos conectarnos
             IPAddress direc = IPAddress.Parse("192.168.56.102");
-            IPEndPoint ipep = new IPEndPoint(direc, 9010);
+            IPEndPoint ipep = new IPEndPoint(direc, 9130);
 
 
             //Creamos el socket 
@@ -98,7 +98,13 @@ namespace ClienteProyecto
                 else
                 {
                     nickConsBox.Text = "";
-                    MessageBox.Show(mensaje);
+                    string[] partes = mensaje.Split('/');
+
+                    // Crear un mensaje combinado para mostrar en el MessageBox
+                    string mensajeMostrar = string.Join(Environment.NewLine, partes);
+
+                    // Mostrar el mensaje en un MessageBox
+                    MessageBox.Show(mensajeMostrar, "Mensaje Separado");
                 }
             }
             else
