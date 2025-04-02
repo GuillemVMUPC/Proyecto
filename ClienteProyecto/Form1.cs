@@ -29,8 +29,8 @@ namespace ClienteProyecto
         {
             //Creamos un IPEndPoint con el ip del servidor y puerto del servidor 
             //al que deseamos conectarnos
-            IPAddress direc = IPAddress.Parse("192.168.56.102");
-            IPEndPoint ipep = new IPEndPoint(direc, 9130);
+            IPAddress direc = IPAddress.Parse("192.168.56.101");
+            IPEndPoint ipep = new IPEndPoint(direc, 9020);
 
 
             //Creamos el socket 
@@ -58,7 +58,7 @@ namespace ClienteProyecto
             server.Send(msg);
 
             // Nos desconectamos
-            panel1.BackColor = Color.Gray;
+            panel1.BackColor = Color.Red;
             Desconn.Visible = false;
             Conn.Visible = true;
             server.Shutdown(SocketShutdown.Both);
@@ -97,14 +97,14 @@ namespace ClienteProyecto
                 }
                 else
                 {
-                    nickConsBox.Text = "";
                     string[] partes = mensaje.Split('/');
 
                     // Crear un mensaje combinado para mostrar en el MessageBox
                     string mensajeMostrar = string.Join(Environment.NewLine, partes);
 
                     // Mostrar el mensaje en un MessageBox
-                    MessageBox.Show(mensajeMostrar, "Mensaje Separado");
+                    MessageBox.Show(mensajeMostrar, "Datos de" + nickConsBox.Text);
+                    nickConsBox.Text = "";
                 }
             }
             else
@@ -158,6 +158,7 @@ namespace ClienteProyecto
 
             if (mensaje == "1")
             {
+
                 Nickname_player.Text = nick;
                 LogOut.Visible = true;
                 Log.Visible = false;
@@ -177,11 +178,52 @@ namespace ClienteProyecto
 
         private void LogOut_Click(object sender, EventArgs e)
         {
+            string mensaje = "4/" + Nickname_player.Text;
+            // Enviamos al servidor el nombre tecleado
+            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+            server.Send(msg);
+
             Nickname_player.Text = null;
             LogOut.Visible = false;
             Log.Visible = true;
             Sign.Visible = true;
             sesion = false;
+        }
+
+        private void OnlinePlayers_Click(object sender, EventArgs e)
+        {
+            if(Conn.Visible != true)
+            {
+                string mensaje = "5/";
+                // Enviamos al servidor el nombre tecleado
+                byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+                server.Send(msg);
+
+                //Recibimos la respuesta del servidor
+                byte[] msg2 = new byte[80];
+                server.Receive(msg2);
+                mensaje = Encoding.ASCII.GetString(msg2).Split('\0')[0];
+
+                if (mensaje == "1")
+                {
+                    MessageBox.Show("No hay usuarios conectados.");
+                }
+                else
+                {
+                    string[] partes = mensaje.Split('/');
+
+                    // Crear un mensaje combinado para mostrar en el MessageBox
+                    string mensajeMostrar = string.Join(Environment.NewLine, partes);
+
+                    // Mostrar el mensaje en un MessageBox
+                    MessageBox.Show(mensajeMostrar, "Online Players");
+                }
+            }
+            else
+            {
+                MessageBox.Show("No hay conexion con el servidor");
+            }
+            
         }
     }
 }

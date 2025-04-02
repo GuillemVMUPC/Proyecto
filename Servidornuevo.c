@@ -7,51 +7,104 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <mysql.h>
+#include <pthread.h>
 
-int main(int argc, char *argv[])
+typedef struct{
+	char nombre[20];
+	int socket;
+} Conectado;
+
+typedef struct{
+	Conectado conectados[100];
+	int num;
+} ListaConectados;
+
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+int contador;
+
+ListaConectados milista;
+
+void GiveConnected(char conectados[300])
+{
+	sprintf(conectados,"Online Players - %d",milista.num);
+	int i;
+	for(i=0;i < milista.num;i++)
+	{
+		sprintf(conectados,"%s/Player %d - %s",conectados,i+1,milista.conectados[i].nombre);
+	}
+}
+int Delete(char nombre[20])
+{
+	int pos = GivePos(nombre);
+	if(pos == -1)
+	{
+		return -1;
+	}
+	else
+	{
+		int i;
+		for(i=pos; i < milista.num; i++)
+		{
+			milista.conectados[i] = milista.conectados[i+1];
+		}
+		milista.num--;
+		printf("%d\n",milista.num);
+		return 0;
+	}
+}
+int GivePos (char nombre[20])
+{
+	int i = 0;
+	int encontrado = 0;
+	while((i < milista.num) && !encontrado)
+	{
+		if(strcmp(milista.conectados[i].nombre,nombre) == 0)
+		{
+			encontrado = 1;
+		}
+		if(!encontrado)
+		{
+			i++;
+		}
+		if(encontrado)
+		{
+			return i;
+		}
+		else
+		{
+			return -1;
+		}
+	}
+}
+int Pon (char nombre[20], int socket)
+{
+	if(milista.num == 100)
+	{
+		return -1;
+	}
+	else
+	{
+		strcpy(milista.conectados[milista.num].nombre, nombre);
+		milista.conectados[milista.num].socket = socket;
+		milista.num++;
+		return 0;
+	}
+}
+void *AtenderCliente (void *socket)
 {
 	
-	int sock_conn, sock_listen, ret;
-	struct sockaddr_in serv_adr;
-	char respuesta[512];
+	int sock_conn;
+	int *s;
+	s= (int *) socket;
+	sock_conn= *s;
+	
+	//int socket_conn = * (int *) socket;
+	
 	char peticion[512];
-	// INICIALITZACIONS
-	// Obrim el socket
-	if ((sock_listen = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-	{
-		printf("Error creant socket");
-	}
-	// Fem el bind al port
+	char respuesta[512];
+	int ret;
 	
-	memset(&serv_adr, 0, sizeof(serv_adr));// inicialitza a zero serv_addr
-	serv_adr.sin_family = AF_INET;
-	
-	// asocia el socket a cualquiera de las IP de la m?quina. 
-	//htonl formatea el numero que recibe al formato necesario
-	serv_adr.sin_addr.s_addr = htonl(INADDR_ANY);
-	// establecemos el puerto de escucha
-	serv_adr.sin_port = htons(9130);
-	
-	if (bind(sock_listen, (struct sockaddr *) &serv_adr, sizeof(serv_adr)) < 0)
-	{
-		printf ("Error al bind");
-	}
-	
-	if (listen(sock_listen, 3) < 0)
-	{
-		printf("Error en el Listen");
-	}
-	
-	int i;
-	for (;;)
-	{
-		printf ("Escuchando\n");
-		
-		sock_conn = accept(sock_listen, NULL, NULL);
-		printf ("He recibido conexion\n");
-		//sock_conn es el socket que usaremos para este cliente
-		
-		int terminar =0;
+	int terminar =0;
 		// Entramos en un bucle para atender todas las peticiones de este cliente
 		//hasta que se desconecte
 		while (terminar ==0)
@@ -76,6 +129,7 @@ int main(int argc, char *argv[])
 			char nick[25];
 			char pass[10];
 			char respt[100];
+			char conectados[300];
 			// variables temporales para guardar datos
 			
 			if (codigo ==0) //petici?n de desconexi?n
@@ -124,6 +178,7 @@ int main(int argc, char *argv[])
 					{
 						//devuelve 1 si la password esta asociada a ese nickname
 						strcpy(respuesta, "1");
+						Pon(nick,sock_conn);
 					}
 					else
 					{
@@ -149,7 +204,33 @@ int main(int argc, char *argv[])
 					//envia un 2 si no se ha encontrado al usuario en la base de datos
 					strcpy(respuesta, "2");
 				}
-			}			
+			}	
+			else if (codigo == 4)
+			{
+				p = strtok( NULL, "/");
+				strcpy (nick, p);
+				printf("%s:\n",nick);
+				Delete(nick);
+				strcpy(respuesta, "");
+			}
+			else if (codigo == 5)
+			{
+				GiveConnected(conectados);
+				printf("%d\n",milista.num);
+				for(int o = 0; o < milista.num;o++)
+				{
+					printf("1 - %d\n",milista.conectados[o].socket);
+				}
+				printf("Resultado: %s\n",conectados);
+				if(milista.num == 0)
+				{
+					strcpy(respuesta, "1");
+				}
+				else
+				{
+					strcpy(respuesta, conectados);
+				}
+			}
 			if (codigo !=0)
 			{
 				
@@ -157,11 +238,17 @@ int main(int argc, char *argv[])
 				// Enviamos respuesta
 				write (sock_conn,respuesta, strlen(respuesta));
 			}
+			if ((codigo ==1)||(codigo==2)|| (codigo==3)|| (codigo==4)||(codigo==5))
+			{
+				pthread_mutex_lock( &mutex ); //No me interrumpas ahora
+				contador = contador +1;
+				pthread_mutex_unlock( &mutex); //ya puedes interrumpirme
+			}
 			// Se acabo el servicio para este cliente
 		}
 		close(sock_conn);
 	}
-}	
+	
 void Consulta(char* respt, char nick[25], int tipo)
 {
 	MYSQL *conn;
@@ -334,4 +421,54 @@ int Add(char nick[25], char pass[10], char* respt)
 	// cerrar la conexion con el servidor MYSQL
 	mysql_close (conn);
 }
-
+int main(int argc, char *argv[])
+{
+	
+	int sock_conn, sock_listen, ret;
+	struct sockaddr_in serv_adr;
+	char respuesta[512];
+	char peticion[512];
+	milista.num=0;
+	// INICIALITZACIONS
+	// Obrim el socket
+	if ((sock_listen = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+	{
+		printf("Error creant socket");
+	}
+	// Fem el bind al port
+	
+	memset(&serv_adr, 0, sizeof(serv_adr));// inicialitza a zero serv_addr
+	serv_adr.sin_family = AF_INET;
+	
+	// asocia el socket a cualquiera de las IP de la m?quina. 
+	//htonl formatea el numero que recibe al formato necesario
+	serv_adr.sin_addr.s_addr = htonl(INADDR_ANY);
+	// establecemos el puerto de escucha
+	serv_adr.sin_port = htons(9020);
+	
+	if (bind(sock_listen, (struct sockaddr *) &serv_adr, sizeof(serv_adr)) < 0)
+	{
+		printf ("Error al bind");
+	}
+	
+	if (listen(sock_listen, 3) < 0)
+	{
+		printf("Error en el Listen");
+	}
+	
+	contador =0;
+	int i;
+	i=0;
+	int sockets[100];
+	pthread_t thread[100];
+	for (;;)
+	{
+		printf ("Escuchando\n");
+		
+		sock_conn = accept(sock_listen, NULL, NULL);
+		printf ("He recibido conexion\n");
+		//sock_conn es el socket que usaremos para este cliente
+		sockets[i] =sock_conn;
+		pthread_create (&thread[i], NULL, AtenderCliente,&sockets[i]);
+		i=i+1;}
+}
