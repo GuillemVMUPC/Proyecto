@@ -39,6 +39,7 @@
             nickConsBox = new TextBox();
             label1 = new Label();
             LogOut = new Button();
+            OnlinePlayers = new Button();
             SuspendLayout();
             // 
             // Conn
@@ -63,7 +64,7 @@
             // 
             // panel1
             // 
-            panel1.BackColor = SystemColors.Control;
+            panel1.BackColor = Color.Red;
             panel1.Location = new Point(157, 12);
             panel1.Name = "panel1";
             panel1.Size = new Size(36, 35);
@@ -144,11 +145,22 @@
             LogOut.UseVisualStyleBackColor = true;
             LogOut.Click += LogOut_Click;
             // 
+            // OnlinePlayers
+            // 
+            OnlinePlayers.Location = new Point(243, 14);
+            OnlinePlayers.Name = "OnlinePlayers";
+            OnlinePlayers.Size = new Size(135, 33);
+            OnlinePlayers.TabIndex = 10;
+            OnlinePlayers.Text = "Online Players";
+            OnlinePlayers.UseVisualStyleBackColor = true;
+            OnlinePlayers.Click += OnlinePlayers_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(OnlinePlayers);
             Controls.Add(label1);
             Controls.Add(nickConsBox);
             Controls.Add(Salir);
@@ -180,5 +192,6 @@
         private TextBox nickConsBox;
         private Label label1;
         private Button LogOut;
+        private Button OnlinePlayers;
     }
 }
