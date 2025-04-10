@@ -22,15 +22,18 @@ typedef struct{
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 int contador;
 
+int i;
+int sockets[100];
+
 ListaConectados milista;
 
 void GiveConnected(char conectados[300])
 {
-	sprintf(conectados,"Online Players - %d",milista.num);
+	sprintf(conectados,"4/%d",milista.num);
 	int i;
 	for(i=0;i < milista.num;i++)
 	{
-		sprintf(conectados,"%s/Player %d - %s",conectados,i+1,milista.conectados[i].nombre);
+		sprintf(conectados,"%s/%s",conectados,milista.conectados[i].nombre);
 	}
 }
 int Delete(char nombre[20])
@@ -102,6 +105,7 @@ void *AtenderCliente (void *socket)
 	
 	char peticion[512];
 	char respuesta[512];
+	char notificacion[20];
 	int ret;
 	
 	int terminar =0;
@@ -149,12 +153,12 @@ void *AtenderCliente (void *socket)
 					p = strtok( NULL, "/");
 					strcpy (pass, p);
 					Add(nick,pass,respt);
-					strcpy(respuesta,"1");
+					strcpy(respuesta,"1/1");
 				}
 				else
 				{
 					//si esta en uso notifica con un 2 para informarle al usuario
-					strcpy(respuesta, "2");
+					strcpy(respuesta, "1/2");
 				}
 			}
 			else if (codigo ==2)
@@ -167,7 +171,7 @@ void *AtenderCliente (void *socket)
 				if(respt == NULL || respt[0] == '\0')
 				{
 					//nickname no encontrado en la base
-					strcpy(respuesta, "2");
+					strcpy(respuesta, "2/2");
 				}
 				else
 				{
@@ -177,13 +181,13 @@ void *AtenderCliente (void *socket)
 					if(strcmp(pass,respt)==0)
 					{
 						//devuelve 1 si la password esta asociada a ese nickname
-						strcpy(respuesta, "1");
+						strcpy(respuesta, "2/1");
 						Pon(nick,sock_conn);
 					}
 					else
 					{
 						//devuelve 3 si la password no es la asociada al nickname
-						strcpy(respuesta, "3");
+						strcpy(respuesta, "2/3");
 					}
 				}
 			}
@@ -202,7 +206,7 @@ void *AtenderCliente (void *socket)
 				else
 				{
 					//envia un 2 si no se ha encontrado al usuario en la base de datos
-					strcpy(respuesta, "2");
+					strcpy(respuesta, "3/N");
 				}
 			}	
 			else if (codigo == 4)
@@ -212,24 +216,6 @@ void *AtenderCliente (void *socket)
 				printf("%s:\n",nick);
 				Delete(nick);
 				strcpy(respuesta, "");
-			}
-			else if (codigo == 5)
-			{
-				GiveConnected(conectados);
-				printf("%d\n",milista.num);
-				for(int o = 0; o < milista.num;o++)
-				{
-					printf("1 - %d\n",milista.conectados[o].socket);
-				}
-				printf("Resultado: %s\n",conectados);
-				if(milista.num == 0)
-				{
-					strcpy(respuesta, "1");
-				}
-				else
-				{
-					strcpy(respuesta, conectados);
-				}
 			}
 			if (codigo !=0)
 			{
@@ -243,6 +229,27 @@ void *AtenderCliente (void *socket)
 				pthread_mutex_lock( &mutex ); //No me interrumpas ahora
 				contador = contador +1;
 				pthread_mutex_unlock( &mutex); //ya puedes interrumpirme
+				int j;
+				GiveConnected(conectados);
+				printf("%d\n",milista.num);
+				for(int o = 0; o < milista.num;o++)
+				{
+					printf("1 - %d\n",milista.conectados[o].socket);
+				}
+				printf("Resultado: %s\n",conectados);
+				if(milista.num == 0)
+				{
+					strcpy(notificacion, "4/N");
+				}
+				else
+				{
+					sprintf(notificacion,("%s", conectados));
+				}
+				for (j=0; j< i; j++)
+				{	
+					printf ("notificacion: %s\n", notificacion);
+					write (sockets[j],notificacion, strlen(notificacion));
+				}
 			}
 			// Se acabo el servicio para este cliente
 		}
@@ -357,7 +364,7 @@ void Consulta(char* respt, char nick[25], int tipo)
 				//de ese player
 				printf("Valor de row[4]: %s\n", row[4]);  // Para verificar el valor de la cadena
 				
-				sprintf(respt,"ID PLyaer: %s/Nickname: %s/Password: %s/Total Score: %f/Last Log: %s",row[0],row[1],row[2],row[3],row[4]);
+				sprintf(respt,"3/%s/%s/%s/%f/%s",row[0],row[1],row[2],row[3],row[4]);
 			}
 			row = mysql_fetch_row (resultado);
 		}
@@ -444,7 +451,7 @@ int main(int argc, char *argv[])
 	//htonl formatea el numero que recibe al formato necesario
 	serv_adr.sin_addr.s_addr = htonl(INADDR_ANY);
 	// establecemos el puerto de escucha
-	serv_adr.sin_port = htons(9020);
+	serv_adr.sin_port = htons(9050);
 	
 	if (bind(sock_listen, (struct sockaddr *) &serv_adr, sizeof(serv_adr)) < 0)
 	{
@@ -457,9 +464,7 @@ int main(int argc, char *argv[])
 	}
 	
 	contador =0;
-	int i;
 	i=0;
-	int sockets[100];
 	pthread_t thread[100];
 	for (;;)
 	{

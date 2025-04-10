@@ -39,7 +39,22 @@
             nickConsBox = new TextBox();
             label1 = new Label();
             LogOut = new Button();
-            OnlinePlayers = new Button();
+            Panel = new Panel();
+            label3 = new Label();
+            label2 = new Label();
+            passtxtpanel = new TextBox();
+            nicktxtpanel = new TextBox();
+            SignInPanel = new Button();
+            CancelPanel = new Button();
+            LogInPanel = new Button();
+            panel2 = new Panel();
+            label4 = new Label();
+            player4 = new Label();
+            player3 = new Label();
+            player2 = new Label();
+            player1 = new Label();
+            Panel.SuspendLayout();
+            panel2.SuspendLayout();
             SuspendLayout();
             // 
             // Conn
@@ -72,7 +87,7 @@
             // 
             // Sign
             // 
-            Sign.Location = new Point(704, 13);
+            Sign.Location = new Point(708, 13);
             Sign.Name = "Sign";
             Sign.Size = new Size(84, 34);
             Sign.TabIndex = 0;
@@ -95,13 +110,12 @@
             Nickname_player.AutoSize = true;
             Nickname_player.Location = new Point(687, 416);
             Nickname_player.Name = "Nickname_player";
-            Nickname_player.Size = new Size(59, 25);
+            Nickname_player.Size = new Size(0, 25);
             Nickname_player.TabIndex = 4;
-            Nickname_player.Text = "label1";
             // 
             // Consultar
             // 
-            Consultar.Location = new Point(499, 203);
+            Consultar.Location = new Point(551, 199);
             Consultar.Name = "Consultar";
             Consultar.Size = new Size(112, 34);
             Consultar.TabIndex = 5;
@@ -121,7 +135,7 @@
             // 
             // nickConsBox
             // 
-            nickConsBox.Location = new Point(343, 206);
+            nickConsBox.Location = new Point(395, 201);
             nickConsBox.Name = "nickConsBox";
             nickConsBox.Size = new Size(150, 31);
             nickConsBox.TabIndex = 7;
@@ -129,7 +143,7 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(243, 208);
+            label1.Location = new Point(295, 204);
             label1.Name = "label1";
             label1.Size = new Size(94, 25);
             label1.TabIndex = 8;
@@ -145,22 +159,155 @@
             LogOut.UseVisualStyleBackColor = true;
             LogOut.Click += LogOut_Click;
             // 
-            // OnlinePlayers
+            // Panel
             // 
-            OnlinePlayers.Location = new Point(243, 14);
-            OnlinePlayers.Name = "OnlinePlayers";
-            OnlinePlayers.Size = new Size(135, 33);
-            OnlinePlayers.TabIndex = 10;
-            OnlinePlayers.Text = "Online Players";
-            OnlinePlayers.UseVisualStyleBackColor = true;
-            OnlinePlayers.Click += OnlinePlayers_Click;
+            Panel.BackColor = Color.White;
+            Panel.BorderStyle = BorderStyle.FixedSingle;
+            Panel.Controls.Add(label3);
+            Panel.Controls.Add(label2);
+            Panel.Controls.Add(passtxtpanel);
+            Panel.Controls.Add(nicktxtpanel);
+            Panel.Controls.Add(SignInPanel);
+            Panel.Controls.Add(CancelPanel);
+            Panel.Controls.Add(LogInPanel);
+            Panel.Location = new Point(502, 1);
+            Panel.Name = "Panel";
+            Panel.Size = new Size(300, 150);
+            Panel.TabIndex = 10;
+            // 
+            // label3
+            // 
+            label3.AutoSize = true;
+            label3.Location = new Point(22, 54);
+            label3.Name = "label3";
+            label3.Size = new Size(87, 25);
+            label3.TabIndex = 6;
+            label3.Text = "Password";
+            // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.Location = new Point(19, 13);
+            label2.Name = "label2";
+            label2.Size = new Size(90, 25);
+            label2.TabIndex = 5;
+            label2.Text = "Nickname";
+            // 
+            // passtxtpanel
+            // 
+            passtxtpanel.Location = new Point(115, 51);
+            passtxtpanel.Name = "passtxtpanel";
+            passtxtpanel.Size = new Size(150, 31);
+            passtxtpanel.TabIndex = 4;
+            // 
+            // nicktxtpanel
+            // 
+            nicktxtpanel.Location = new Point(115, 10);
+            nicktxtpanel.Name = "nicktxtpanel";
+            nicktxtpanel.Size = new Size(150, 31);
+            nicktxtpanel.TabIndex = 3;
+            // 
+            // SignInPanel
+            // 
+            SignInPanel.BackColor = Color.Blue;
+            SignInPanel.FlatStyle = FlatStyle.Flat;
+            SignInPanel.ForeColor = Color.White;
+            SignInPanel.Location = new Point(173, 99);
+            SignInPanel.Name = "SignInPanel";
+            SignInPanel.Size = new Size(112, 34);
+            SignInPanel.TabIndex = 2;
+            SignInPanel.Text = "Sign In";
+            SignInPanel.UseVisualStyleBackColor = false;
+            SignInPanel.Click += SignInPanel_Click;
+            // 
+            // CancelPanel
+            // 
+            CancelPanel.BackColor = Color.Red;
+            CancelPanel.FlatStyle = FlatStyle.Flat;
+            CancelPanel.ForeColor = Color.White;
+            CancelPanel.Location = new Point(19, 99);
+            CancelPanel.Name = "CancelPanel";
+            CancelPanel.Size = new Size(112, 34);
+            CancelPanel.TabIndex = 1;
+            CancelPanel.Text = "Cancel";
+            CancelPanel.UseVisualStyleBackColor = false;
+            CancelPanel.Click += CancelPanel_Click;
+            // 
+            // LogInPanel
+            // 
+            LogInPanel.BackColor = Color.Blue;
+            LogInPanel.FlatStyle = FlatStyle.Flat;
+            LogInPanel.ForeColor = Color.White;
+            LogInPanel.Location = new Point(173, 99);
+            LogInPanel.Name = "LogInPanel";
+            LogInPanel.Size = new Size(112, 34);
+            LogInPanel.TabIndex = 0;
+            LogInPanel.Text = "Log In";
+            LogInPanel.UseVisualStyleBackColor = false;
+            LogInPanel.Click += LogInPanel_Click;
+            // 
+            // panel2
+            // 
+            panel2.BackColor = Color.White;
+            panel2.BorderStyle = BorderStyle.FixedSingle;
+            panel2.Controls.Add(label4);
+            panel2.Controls.Add(player4);
+            panel2.Controls.Add(player3);
+            panel2.Controls.Add(player2);
+            panel2.Controls.Add(player1);
+            panel2.Location = new Point(12, 83);
+            panel2.Name = "panel2";
+            panel2.Size = new Size(194, 264);
+            panel2.TabIndex = 11;
+            // 
+            // label4
+            // 
+            label4.AutoSize = true;
+            label4.Location = new Point(36, 17);
+            label4.Name = "label4";
+            label4.Size = new Size(123, 25);
+            label4.TabIndex = 4;
+            label4.Text = "Online Players";
+            // 
+            // player4
+            // 
+            player4.AutoSize = true;
+            player4.Location = new Point(16, 205);
+            player4.Name = "player4";
+            player4.Size = new Size(0, 25);
+            player4.TabIndex = 3;
+            // 
+            // player3
+            // 
+            player3.AutoSize = true;
+            player3.Location = new Point(16, 155);
+            player3.Name = "player3";
+            player3.Size = new Size(0, 25);
+            player3.TabIndex = 2;
+            // 
+            // player2
+            // 
+            player2.AutoSize = true;
+            player2.Location = new Point(16, 105);
+            player2.Name = "player2";
+            player2.Size = new Size(0, 25);
+            player2.TabIndex = 1;
+            // 
+            // player1
+            // 
+            player1.AutoSize = true;
+            player1.Location = new Point(16, 55);
+            player1.Name = "player1";
+            player1.Size = new Size(0, 25);
+            player1.TabIndex = 0;
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
-            Controls.Add(OnlinePlayers);
+            Controls.Add(panel2);
+            Controls.Add(Panel);
             Controls.Add(label1);
             Controls.Add(nickConsBox);
             Controls.Add(Salir);
@@ -174,6 +321,10 @@
             Controls.Add(LogOut);
             Name = "Form1";
             Text = "Form1";
+            Panel.ResumeLayout(false);
+            Panel.PerformLayout();
+            panel2.ResumeLayout(false);
+            panel2.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -192,6 +343,19 @@
         private TextBox nickConsBox;
         private Label label1;
         private Button LogOut;
-        private Button OnlinePlayers;
+        private Panel Panel;
+        private Label label3;
+        private Label label2;
+        private TextBox passtxtpanel;
+        private TextBox nicktxtpanel;
+        private Button SignInPanel;
+        private Button CancelPanel;
+        private Button LogInPanel;
+        private Panel panel2;
+        private Label player4;
+        private Label player3;
+        private Label player2;
+        private Label player1;
+        private Label label4;
     }
 }

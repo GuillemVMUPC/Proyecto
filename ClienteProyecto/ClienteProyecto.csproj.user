@@ -4,11 +4,5 @@
     <Compile Update="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="LogInInterf.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Update="SignUpInterf.cs">
-      <SubType>Form</SubType>
-    </Compile>
   </ItemGroup>
 </Project>

@@ -23,8 +23,6 @@ C:\share\Proyecto\Proyecto\ClienteProyecto\bin\Debug\net7.0-windows\ClienteProye
 C:\share\Proyecto\Proyecto\ClienteProyecto\bin\Debug\net7.0-windows\ClienteProyecto.dll
 C:\share\Proyecto\Proyecto\ClienteProyecto\bin\Debug\net7.0-windows\ClienteProyecto.pdb
 C:\share\Proyecto\Proyecto\ClienteProyecto\obj\Debug\net7.0-windows\ClienteProyecto.Form1.resources
-C:\share\Proyecto\Proyecto\ClienteProyecto\obj\Debug\net7.0-windows\ClienteProyecto.LogInInterf.resources
-C:\share\Proyecto\Proyecto\ClienteProyecto\obj\Debug\net7.0-windows\ClienteProyecto.SignUpInterf.resources
 C:\share\Proyecto\Proyecto\ClienteProyecto\obj\Debug\net7.0-windows\ClienteProyecto.csproj.GenerateResource.cache
 C:\share\Proyecto\Proyecto\ClienteProyecto\obj\Debug\net7.0-windows\ClienteProyecto.GeneratedMSBuildEditorConfig.editorconfig
 C:\share\Proyecto\Proyecto\ClienteProyecto\obj\Debug\net7.0-windows\ClienteProyecto.AssemblyInfoInputs.cache
