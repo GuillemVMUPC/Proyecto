@@ -48,13 +48,27 @@
             CancelPanel = new Button();
             LogInPanel = new Button();
             panel2 = new Panel();
+            gameCancel = new Button();
+            Guest = new Label();
+            Host = new Label();
+            game = new Label();
             label4 = new Label();
             player4 = new Label();
             player3 = new Label();
             player2 = new Label();
             player1 = new Label();
+            panelInv = new Panel();
+            sendInvbut = new Button();
+            cancelInv = new Button();
+            comboBoxJugadores = new ComboBox();
+            acceptButton = new Button();
+            rejectButton = new Button();
+            nameInv = new Label();
+            sendInv = new Button();
+            startBut = new Button();
             Panel.SuspendLayout();
             panel2.SuspendLayout();
+            panelInv.SuspendLayout();
             SuspendLayout();
             // 
             // Conn
@@ -202,7 +216,7 @@
             // 
             // nicktxtpanel
             // 
-            nicktxtpanel.Location = new Point(115, 10);
+            nicktxtpanel.Location = new Point(115, 12);
             nicktxtpanel.Name = "nicktxtpanel";
             nicktxtpanel.Size = new Size(150, 31);
             nicktxtpanel.TabIndex = 3;
@@ -250,6 +264,11 @@
             // 
             panel2.BackColor = Color.White;
             panel2.BorderStyle = BorderStyle.FixedSingle;
+            panel2.Controls.Add(startBut);
+            panel2.Controls.Add(gameCancel);
+            panel2.Controls.Add(Guest);
+            panel2.Controls.Add(Host);
+            panel2.Controls.Add(game);
             panel2.Controls.Add(label4);
             panel2.Controls.Add(player4);
             panel2.Controls.Add(player3);
@@ -259,6 +278,44 @@
             panel2.Name = "panel2";
             panel2.Size = new Size(194, 264);
             panel2.TabIndex = 11;
+            // 
+            // gameCancel
+            // 
+            gameCancel.BackColor = Color.Red;
+            gameCancel.FlatStyle = FlatStyle.Flat;
+            gameCancel.ForeColor = Color.White;
+            gameCancel.Location = new Point(3, 225);
+            gameCancel.Name = "gameCancel";
+            gameCancel.Size = new Size(75, 34);
+            gameCancel.TabIndex = 8;
+            gameCancel.Text = "Cancel";
+            gameCancel.UseVisualStyleBackColor = false;
+            gameCancel.Click += gameCancel_Click;
+            // 
+            // Guest
+            // 
+            Guest.AutoSize = true;
+            Guest.Location = new Point(36, 91);
+            Guest.Name = "Guest";
+            Guest.Size = new Size(0, 25);
+            Guest.TabIndex = 7;
+            // 
+            // Host
+            // 
+            Host.AutoSize = true;
+            Host.Location = new Point(36, 55);
+            Host.Name = "Host";
+            Host.Size = new Size(0, 25);
+            Host.TabIndex = 6;
+            // 
+            // game
+            // 
+            game.AutoSize = true;
+            game.Location = new Point(36, 22);
+            game.Name = "game";
+            game.Size = new Size(78, 25);
+            game.TabIndex = 5;
+            game.Text = "In Game";
             // 
             // label4
             // 
@@ -301,11 +358,120 @@
             player1.Size = new Size(0, 25);
             player1.TabIndex = 0;
             // 
+            // panelInv
+            // 
+            panelInv.BackColor = Color.White;
+            panelInv.BorderStyle = BorderStyle.FixedSingle;
+            panelInv.Controls.Add(sendInvbut);
+            panelInv.Controls.Add(cancelInv);
+            panelInv.Controls.Add(comboBoxJugadores);
+            panelInv.Controls.Add(acceptButton);
+            panelInv.Controls.Add(rejectButton);
+            panelInv.Controls.Add(nameInv);
+            panelInv.Location = new Point(295, 139);
+            panelInv.Name = "panelInv";
+            panelInv.Size = new Size(286, 175);
+            panelInv.TabIndex = 12;
+            panelInv.Visible = false;
+            // 
+            // sendInvbut
+            // 
+            sendInvbut.BackColor = Color.Blue;
+            sendInvbut.FlatStyle = FlatStyle.Flat;
+            sendInvbut.ForeColor = Color.White;
+            sendInvbut.Location = new Point(172, 117);
+            sendInvbut.Name = "sendInvbut";
+            sendInvbut.Size = new Size(77, 34);
+            sendInvbut.TabIndex = 5;
+            sendInvbut.Text = "Send";
+            sendInvbut.UseVisualStyleBackColor = false;
+            sendInvbut.Click += sendInvbut_Click;
+            // 
+            // cancelInv
+            // 
+            cancelInv.BackColor = Color.Red;
+            cancelInv.FlatStyle = FlatStyle.Flat;
+            cancelInv.ForeColor = Color.White;
+            cancelInv.Location = new Point(34, 117);
+            cancelInv.Name = "cancelInv";
+            cancelInv.Size = new Size(75, 34);
+            cancelInv.TabIndex = 4;
+            cancelInv.Text = "Cancel";
+            cancelInv.UseVisualStyleBackColor = false;
+            cancelInv.Click += cancelInv_Click;
+            // 
+            // comboBoxJugadores
+            // 
+            comboBoxJugadores.FormattingEnabled = true;
+            comboBoxJugadores.Location = new Point(49, 46);
+            comboBoxJugadores.Name = "comboBoxJugadores";
+            comboBoxJugadores.Size = new Size(182, 33);
+            comboBoxJugadores.TabIndex = 3;
+            // 
+            // acceptButton
+            // 
+            acceptButton.BackColor = Color.Blue;
+            acceptButton.FlatStyle = FlatStyle.Flat;
+            acceptButton.ForeColor = Color.White;
+            acceptButton.Location = new Point(172, 117);
+            acceptButton.Name = "acceptButton";
+            acceptButton.Size = new Size(77, 34);
+            acceptButton.TabIndex = 2;
+            acceptButton.Text = "Accept";
+            acceptButton.UseVisualStyleBackColor = false;
+            acceptButton.Click += acceptButton_Click;
+            // 
+            // rejectButton
+            // 
+            rejectButton.BackColor = Color.Red;
+            rejectButton.FlatStyle = FlatStyle.Flat;
+            rejectButton.ForeColor = Color.White;
+            rejectButton.Location = new Point(34, 117);
+            rejectButton.Name = "rejectButton";
+            rejectButton.Size = new Size(75, 34);
+            rejectButton.TabIndex = 1;
+            rejectButton.Text = "Reject";
+            rejectButton.UseVisualStyleBackColor = false;
+            rejectButton.Click += rejectButton_Click;
+            // 
+            // nameInv
+            // 
+            nameInv.AutoSize = true;
+            nameInv.Location = new Point(99, 54);
+            nameInv.Name = "nameInv";
+            nameInv.Size = new Size(0, 25);
+            nameInv.TabIndex = 0;
+            // 
+            // sendInv
+            // 
+            sendInv.Location = new Point(556, 239);
+            sendInv.Name = "sendInv";
+            sendInv.Size = new Size(107, 36);
+            sendInv.TabIndex = 13;
+            sendInv.Text = "Invitar";
+            sendInv.UseVisualStyleBackColor = true;
+            sendInv.Click += sendInv_Click;
+            // 
+            // startBut
+            // 
+            startBut.BackColor = Color.Blue;
+            startBut.FlatStyle = FlatStyle.Flat;
+            startBut.ForeColor = Color.White;
+            startBut.Location = new Point(103, 225);
+            startBut.Name = "startBut";
+            startBut.Size = new Size(77, 34);
+            startBut.TabIndex = 9;
+            startBut.Text = "Start";
+            startBut.UseVisualStyleBackColor = false;
+            startBut.Click += startBut_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(panelInv);
+            Controls.Add(sendInv);
             Controls.Add(panel2);
             Controls.Add(Panel);
             Controls.Add(label1);
@@ -325,6 +491,8 @@
             Panel.PerformLayout();
             panel2.ResumeLayout(false);
             panel2.PerformLayout();
+            panelInv.ResumeLayout(false);
+            panelInv.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -357,5 +525,18 @@
         private Label player2;
         private Label player1;
         private Label label4;
+        private Panel panelInv;
+        private Button rejectButton;
+        private Label nameInv;
+        private Button acceptButton;
+        private Button sendInv;
+        private ComboBox comboBoxJugadores;
+        private Button sendInvbut;
+        private Button cancelInv;
+        private Label Guest;
+        private Label Host;
+        private Label game;
+        private Button gameCancel;
+        private Button startBut;
     }
 }

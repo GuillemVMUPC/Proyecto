@@ -21,6 +21,16 @@ typedef struct{
 	int num;
 } ListaConectados;
 
+typedef struct{
+	char Host[25];
+	char Guest[25];
+	int Sent;
+}Game;
+
+typedef struct{
+	Game Games[100];
+	int num;
+}GameList;
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 int contador;
@@ -30,6 +40,8 @@ int sockets[100];
 
 // Creación de la lista de usuarios conectados.
 ListaConectados milista;
+
+GameList mylist;
 
 void GiveConnected(char conectados[300])
 {
@@ -79,9 +91,10 @@ int GivePos (char nombre[20])
 			//Pasa a la siguiente posicion del vector.
 			i++;
 		}
-		if(encontrado)
+		else if(encontrado)
 		{
 			// Devuelve la posicion en el vector donde se encuentra el nombre.
+			printf("-----------------------------------\n Posicion %d \n ------------------------\n",i);
 			return i;
 		}
 		else
@@ -102,6 +115,7 @@ int Pon (char nombre[20], int socket)
 	{
 		strcpy(milista.conectados[milista.num].nombre, nombre);
 		milista.conectados[milista.num].socket = socket;
+		printf("-------Funcion Pon----------\n Nombre - %s\n---------------------------\n",milista.conectados[milista.num ].nombre);
 		milista.num++;
 		return 0;
 	}
@@ -119,6 +133,9 @@ void *AtenderCliente (void *socket)
 	char peticion[512];
 	char respuesta[512];
 	char notificacion[20];
+	char invitacion[50];
+	char respInv[50];
+	char confInv[50];
 	
 	int ret;
 	
@@ -129,14 +146,12 @@ void *AtenderCliente (void *socket)
 		{
 			// Ahora recibimos la petici?n
 			ret=read(sock_conn,peticion, sizeof(peticion));
-			printf ("Recibido\n");
-			printf("Bytes recibidos: %d\n", ret);
 			
 			// Tenemos que añadirle la marca de fin de string 
 			// para que no escriba lo que hay despues en el buffer
 			peticion[ret]='\0';
 			
-			printf ("Peticion: %s\n",peticion);
+			printf ("-------Peticion------------\nPeticion: %s\n--------------------\n",peticion);
 			
 			// vamos a ver que quieren
 			char *p = strtok( peticion, "/");
@@ -228,15 +243,83 @@ void *AtenderCliente (void *socket)
 			{
 				p = strtok( NULL, "/");
 				strcpy (nick, p);
-				printf("%s:\n",nick);
+				printf("-------------- Funcion Log Out ---------------\n Nickname - %s:\n--------------------------\n",nick);
 				Delete(nick);
+				strcpy(respuesta, "");
+			}
+			else if (codigo == 5)
+			{
+				p = strtok( NULL, "/");
+				strcpy(nick,p);
+				strcpy(mylist.Games[mylist.num].Host,nick);
+				p = strtok( NULL, "/");
+				strcpy(nick,p);
+				strcpy(mylist.Games[mylist.num].Guest,nick);
+				mylist.Games[mylist.num].Sent = 0;
+				mylist.num++;
+				strcpy(respuesta, "");
+				for(int c = 0; c < mylist.num;c++)
+				{
+					if(mylist.Games[c].Sent == 0)
+					{
+						int pos = GivePos(mylist.Games[c].Guest);
+						if(pos != -1)
+						{
+							sprintf(invitacion, "5/%s/%d",mylist.Games[c].Host,c); 
+							printf("--------Invitacion------------\n Invitacion - %d\n-----------------------\n",invitacion[c]);
+							mylist.Games[mylist.num].Sent = 1;
+							write(milista.conectados[pos].socket,invitacion,strlen(invitacion));
+						}
+					}
+				}
+			}
+			if (codigo == 6)
+			{
+				p = strtok( NULL, "/");
+				int poslis = atoi(p);
+				mylist.Games[poslis].Sent = 2;
+				int pos = GivePos(mylist.Games[poslis].Host);
+				if (pos != -1)
+				{
+					sprintf(respInv, "6/%d",1);					
+					printf("--------Respuesta Invitacion------------\n Respuesta Invitacion - %s\n------------------------\n",respInv);
+					write(milista.conectados[pos].socket,respInv,strlen(respInv));
+				}
+				strcpy(respuesta, "");
+			}
+			if (codigo == 7)
+			{
+				p = strtok( NULL, "/");
+				int poslis = atoi(p);
+				mylist.Games[poslis].Sent = 3;
+				int pos = GivePos(mylist.Games[poslis].Host);
+				if (pos != -1)
+				{
+					sprintf(respInv, ("6/%d",2));
+					printf("--------Respuesta Invitacion------------\n Respuesta Invitacion - %s\n------------------------\n",respInv);
+					write(milista.conectados[pos].socket,respInv,strlen(respInv));
+				}
+				strcpy(respuesta, "");
+			}
+			if (codigo == 8)
+			{
+				p = strtok( NULL, "/");
+				int g = atoi(p);
+				int pos = GivePos(mylist.Games[g].Host);
+				int pos2 = GivePos(mylist.Games[g].Guest);
+				if ((pos != -1)&&(pos2 != -1))
+				{
+					sprintf(confInv,"7/%d/%s/%s",1,mylist.Games[g].Host,mylist.Games[g].Guest);
+					printf("--------Confirmacion Invitacion------------\n Respuesta Invitacion - %s\n------------------------\n",confInv);
+					write(milista.conectados[pos].socket,confInv,strlen(confInv));
+					write(milista.conectados[pos2].socket,confInv,strlen(confInv));
+				}
 				strcpy(respuesta, "");
 			}
 			//Respuesta a la peticion.
 			if (codigo !=0)
 			{
-				
-				printf ("Respuesta: %s\n", respuesta);
+				printf ("--------Respuesta---------\n Respuesta - %s\n-------------------\n", respuesta);
 				// Enviamos respuesta
 				write (sock_conn,respuesta, strlen(respuesta));
 			}
@@ -248,12 +331,12 @@ void *AtenderCliente (void *socket)
 				pthread_mutex_unlock( &mutex); //ya puedes interrumpirme
 				int j;
 				GiveConnected(conectados);
-				printf("%d\n",milista.num);
+				printf("------Numero de Conectados-------\n Conectados - %d\n",milista.num);
 				for(int o = 0; o < milista.num;o++)
 				{
-					printf("1 - %d\n",milista.conectados[o].socket);
+					printf(" 1 - %d\n",milista.conectados[o].socket);
 				}
-				printf("Resultado: %s\n",conectados);
+				printf("--------------------\n Lista Conectados - %s\n---------------------\n",conectados);
 				if(milista.num == 0)
 				{
 					strcpy(notificacion, "4/N");
@@ -264,7 +347,7 @@ void *AtenderCliente (void *socket)
 				}
 				for (j=0; j< i; j++)
 				{	
-					printf ("notificacion: %s\n", notificacion);
+					printf ("---------Notificacion------------\n Notificacion - %s\n-------------------\n", notificacion);
 					write (sockets[j],notificacion, strlen(notificacion));
 				}
 			}
@@ -297,7 +380,7 @@ void Consulta(char* respt, char nick[25], int tipo)
 		exit (1);
 	}
 	//inicializar la conexin
-	conn = mysql_real_connect (conn, "shiva2.upc.es","root", "mysql", "MA_BBDDjuego",0, NULL, 0);
+	conn = mysql_real_connect (conn, "localhost","root", "mysql", "MA_BBDDjuego",0, NULL, 0);
 	if (conn==NULL) 
 	{
 		printf ("Error al inicializar la conexion: %u %s\n",mysql_errno(conn), mysql_error(conn));
@@ -416,7 +499,7 @@ int Add(char nick[25], char pass[10], char* respt)
 	}
 	//inicializar la conexi\uffc3\uffb3n, entrando nuestras claves de acceso y
 	//el nombre de la base de datos a la que queremos acceder
-	conn = mysql_real_connect (conn, "shiva2.upc.es","root", "mysql", "MA_BBDDjuego",0, NULL, 0);
+	conn = mysql_real_connect (conn, "localhost","root", "mysql", "MA_BBDDjuego",0, NULL, 0);
 	if (conn==NULL) 
 	{
 		printf ("Error al inicializar la conexion: %u %s\n",mysql_errno(conn), mysql_error(conn));
@@ -443,7 +526,7 @@ int main(int argc, char *argv[])
 {
 	
 	int sock_conn, sock_listen, ret;
-	int puerto = 50047;
+	int puerto = 9020;
 	
 	struct sockaddr_in serv_adr;
 	
@@ -451,6 +534,7 @@ int main(int argc, char *argv[])
 	char peticion[512];
 	
 	milista.num=0;
+	mylist.num=0;
 	// INICIALITZACIONS
 	// Obrim el socket
 	if ((sock_listen = socket(AF_INET, SOCK_STREAM, 0)) < 0)

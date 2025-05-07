@@ -7,7 +7,7 @@
       "RelativeMoniker": "D:0:0:{80579C76-E339-40D1-A9A0-DEC198F26DB4}|ClienteProyecto.csproj|solutionrelative:form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{80579C76-E339-40D1-A9A0-DEC198F26DB4}|ClienteProyecto.csproj|c:\\share\\proyecto\\proyecto\\clienteproyecto\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "AbsoluteMoniker": "D:0:0:{80579C76-E339-40D1-A9A0-DEC198F26DB4}|ClienteProyecto.csproj|C:\\share\\Proyecto\\Proyecto\\ClienteProyecto\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
       "RelativeMoniker": "D:0:0:{80579C76-E339-40D1-A9A0-DEC198F26DB4}|ClienteProyecto.csproj|solutionrelative:form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
     }
   ],
@@ -29,7 +29,7 @@
               "ToolTip": "C:\\share\\Proyecto\\Proyecto\\ClienteProyecto\\Form1.cs [Design]",
               "RelativeToolTip": "Form1.cs [Design]",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-09T15:59:39.211Z",
+              "WhenOpened": "2025-05-07T11:03:09.411Z",
               "EditorCaption": " [Design]"
             },
             {
@@ -40,7 +40,7 @@
               "RelativeDocumentMoniker": "Form1.cs",
               "ToolTip": "C:\\share\\Proyecto\\Proyecto\\ClienteProyecto\\Form1.cs",
               "RelativeToolTip": "Form1.cs",
-              "ViewState": "AgIAALYAAAAAAAAAAAAxwMQAAAAqAAAAAAAAAA==",
+              "ViewState": "AgIAAKMBAAAAAAAAAAASwLMBAAAiAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-03-31T14:43:36.454Z",
               "EditorCaption": ""
