@@ -29,14 +29,7 @@ namespace ClienteProyecto
             InitializeComponent();
             CheckForIllegalCrossThreadCalls = false; //Necesario para que los elementos de los formularios puedan ser
             //accedidos desde threads diferentes a los que los crearon
-            LogOut.Visible = false;
-            Log.Visible = true;
             sesion = false;
-            Panel.Visible = false;
-            panelInv.Visible = false;
-            game.Visible = false;
-            gameCancel.Visible = false;
-            startBut.Visible = false;
             List<string> jugadoresConectados = new List<string>();
         }
         private void AtenderServidor()

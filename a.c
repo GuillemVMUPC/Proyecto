@@ -21,12 +21,14 @@ typedef struct{
 	int num;
 } ListaConectados;
 
+// Estructura de un Juego en la fase de invitacion.
 typedef struct{
 	char Host[25];
 	char Guest[25];
-	int Sent;
+	int Sent;      // En espera de ser enviado -> 0 ; Enviado -> 1 ; Aceptada -> 2 ; Rechazada -> 3
 }Game;
 
+// Estructura de la lista de Juegos en la fase de invitacion
 typedef struct{
 	Game Games[100];
 	int num;
@@ -41,11 +43,12 @@ int sockets[100];
 // Creación de la lista de usuarios conectados.
 ListaConectados milista;
 
+// Creacion de la lista de Juegos en fase de invitacion.
 GameList mylist;
 
+// Funcion que añade al vector de conectados los usuarios en el formato requerido para enviarlos al cliente.
 void GiveConnected(char conectados[300])
 {
-	// Funcion que añade al vector de conectados los usuarios en el formato requerido para enviarlos al cliente.
 	sprintf(conectados,"4/%d",milista.num);
 	int i;
 	for(i=0;i < milista.num;i++)
@@ -53,9 +56,10 @@ void GiveConnected(char conectados[300])
 		sprintf(conectados,"%s/%s",conectados,milista.conectados[i].nombre);
 	}
 }
+
+// Funcion que elimina un usuario de la lista de conectados.
 int Delete(char nombre[20])
 {
-	// Funcion que elimina un usuario de la lista de conectados.
 	int pos = GivePos(nombre);
 	if(pos == -1)
 	{
@@ -71,46 +75,51 @@ int Delete(char nombre[20])
 		}
 		milista.num--;
 		printf("Usuarios conectados despues de eliminar: %d\n",milista.num);
+		// Indica que se ha eliminado el Usuario correctamente.
 		return 0;
 	}
 }
+
+// Funcion que devuelve la posicion de un usuario solicitado por otra funcion.
 int GivePos (char nombre[20])
 {
-	// Funcion que devuelve la posicion de un usuario solicitado por otra funcion.
 	int i = 0;
 	int encontrado = 0;
 	while((i < milista.num) && !encontrado)
 	{
+		// Comparacion del nombre dado con los nombres en el vector de la lista de conectados.
 		if(strcmp(milista.conectados[i].nombre,nombre) == 0)
 		{
-			// Comparacion del nombre dado con los nombres en el vector de la lista de conectados.
 			encontrado = 1;
 		}
+		//Pasa a la siguiente posicion del vector.
 		if(!encontrado)
 		{
-			//Pasa a la siguiente posicion del vector.
 			i++;
 		}
+		// Devuelve la posicion en el vector donde se encuentra el nombre.
 		else if(encontrado)
 		{
-			// Devuelve la posicion en el vector donde se encuentra el nombre.
 			printf("-----------------------------------\n Posicion %d \n ------------------------\n",i);
 			return i;
 		}
+		//Si el nombre no se encuentra en la lista.
 		else
 		{
-			//Si el nombre no se encuentra en la lista.
 			return -1;
 		}
 	}
 }
+
+// Funcion para añadir un usuario a la lista de conectados.
 int Pon (char nombre[20], int socket)
 {
-	// Funcion para añadir un usuario a la lista de conectados.
+	// Si la lista de Conecatados esta llena devuelve un -1.
 	if(milista.num == 100)
 	{
 		return -1;
 	}
+	// De lo contrario, añade el Usuario a la lista de Conectados.
 	else
 	{
 		strcpy(milista.conectados[milista.num].nombre, nombre);
@@ -120,6 +129,7 @@ int Pon (char nombre[20], int socket)
 		return 0;
 	}
 }
+//Funcion que se ejecuta con las peticiones que hace el cliente.
 void *AtenderCliente (void *socket)
 {
 	
@@ -130,12 +140,13 @@ void *AtenderCliente (void *socket)
 	
 	//int socket_conn = * (int *) socket;
 	
+	// Variables donde se guardan los mensajes que se mandan al cliente
 	char peticion[512];
 	char respuesta[512];
-	char notificacion[20];
-	char invitacion[50];
-	char respInv[50];
-	char confInv[50];
+	char notificacion[512];
+	char invitacion[512];
+	char respInv[512];
+	char confInv[512];
 	
 	int ret;
 	
@@ -170,146 +181,188 @@ void *AtenderCliente (void *socket)
 				terminar=1;
 			}
 			//Peticion de registro de usuario
+			//Mensaje recibido --> 1/nickname/password
 			else if (codigo ==1)
 			{
 				p = strtok( NULL, "/");
 				strcpy (nick, p);
-				Consulta(respt,nick, codigo);
 				//Consulta si el nickname proporcionado esta en uso.
+				Consulta(respt,nick, codigo);
+				//Si no esta en uso crea uno de nuevo junto a la password proporcionada.
 				if(respt != NULL && respt[0] != '\0')
 				{
-					//Si no esta en uso crea uno de nuevo junto a la password proporcionada
 					p = strtok( NULL, "/");
 					strcpy (pass, p);
 					Add(nick,pass,respt);
 					strcpy(respuesta,"1/1");
+					// mensaje que se devuelve --> 1/1
 				}
+				//Si esta en uso notifica con un 2 para informarle al usuario.
 				else
 				{
-					//Si esta en uso notifica con un 2 para informarle al usuario.
 					strcpy(respuesta, "1/2");
+					// mensaje que se devuelve --> 1/2
 				}
 			}
 			//Peticion para iniciar sesion.
+			//Mensaje recibido --> 2/nickname/password
 			else if (codigo ==2)
 			{
 				p = strtok( NULL, "/");
 				strcpy (nick, p);
-				Consulta(respt, nick, codigo);
 				//Consulta que el nickname se encuentre en la base de datos y devuelve la contraseña
+				Consulta(respt, nick, codigo);
+				//Si el Nickname no se encuentra en la base
 				if(respt == NULL || respt[0] == '\0')
 				{
-					//Nickname no encontrado en la base
 					strcpy(respuesta, "2/2");
+					// Mensaje devuelto --> 2/2
 				}
+				//En caso de que este en la base de datos
 				else
 				{
-					//En caso de que este en la base de datos
 					p = strtok( NULL, "/");
 					strcpy (pass, p);
+					//Devuelve 1 si la password esta asociada a ese nickname
 					if(strcmp(pass,respt)==0)
 					{
-						//Devuelve 1 si la password esta asociada a ese nickname
 						strcpy(respuesta, "2/1");
+						// Mensaje devuelto --> 2/1
 						Pon(nick,sock_conn);
 					}
+					//Devuelve 3 si la password no es la asociada al nickname
 					else
 					{
-						//Devuelve 3 si la password no es la asociada al nickname
+						// Mensaje devuelto --> 2/3
 						strcpy(respuesta, "2/3");
 					}
 				}
 			}
 			//Peticion de consulta.
+			//Mensaje recibido --> 3/nickname
 			else if (codigo ==3)
 			{
 				p = strtok( NULL, "/");
 				strcpy (nick, p);
-				Consulta(respt, nick, codigo);
 				//Recoge todos los datos del usuario
+				Consulta(respt, nick, codigo);
+				//Envia al cliente los datos asociados a ese nickname
 				if(respt != NULL || respt[0] != '\0')
 				{
-					//Envia al cliente los datos asociados a ese nickname
 					strcpy(respuesta,respt);
+					//Mensaje devuelto -->
 				}
+				//Envia un 2 si no se ha encontrado al usuario en la base de datos
 				else
 				{
-					//Envia un 2 si no se ha encontrado al usuario en la base de datos
 					strcpy(respuesta, "3/N");
+					//Mensaje devuelto --> 3/N
 				}
 			}	
 			//Peticion de log out
+			//Mensaje recibido --> 4/nickname
 			else if (codigo == 4)
 			{
 				p = strtok( NULL, "/");
 				strcpy (nick, p);
 				printf("-------------- Funcion Log Out ---------------\n Nickname - %s:\n--------------------------\n",nick);
+				//Elimina el Usuario de la lista de Conectados
 				Delete(nick);
 				strcpy(respuesta, "");
 			}
+			//Peticion de invitacion
+			//Mensaje recibido --> 5/nickname/nickUsuarioInv
 			else if (codigo == 5)
 			{
 				p = strtok( NULL, "/");
 				strcpy(nick,p);
+				//Añade el nickname del Usuario que manda la invitacion a un Juego de la lista de Juegos en fase de invitacion
 				strcpy(mylist.Games[mylist.num].Host,nick);
 				p = strtok( NULL, "/");
 				strcpy(nick,p);
+				//Añade el nickname del Usuario que recibe la invitacion al mismo Juego de la lista de Juegos en fase de invitacion
 				strcpy(mylist.Games[mylist.num].Guest,nick);
+				//Indica en el Juego de la lista que la invitacion esta en espera de ser enviado
 				mylist.Games[mylist.num].Sent = 0;
+				//Aumenta el indicador de juegos en la lista de Juegos
 				mylist.num++;
 				strcpy(respuesta, "");
+				//Empieza un bucle para encontrar la posicion del Usuario al que se le quiere invitar al juego
 				for(int c = 0; c < mylist.num;c++)
 				{
+					//1. Comprueba si el estado de la invitacion es la de espera de ser enviado
 					if(mylist.Games[c].Sent == 0)
 					{
+						//2. Coge la posicion del usuario que se encuentra en la posicion c del vector
 						int pos = GivePos(mylist.Games[c].Guest);
+						//3. Si se encuentra la posicion del usuario se manda la invitacion
 						if(pos != -1)
 						{
 							sprintf(invitacion, "5/%s/%d",mylist.Games[c].Host,c); 
+							//Mensaje enviado --> 5/nicknameHost/posicion
 							printf("--------Invitacion------------\n Invitacion - %d\n-----------------------\n",invitacion[c]);
+							//Se modifica el estado del Juego a enviado
 							mylist.Games[mylist.num].Sent = 1;
 							write(milista.conectados[pos].socket,invitacion,strlen(invitacion));
 						}
 					}
 				}
 			}
+			//Peticion de respuesta de la invitacion (aceptada)
+			//Mensaje recibido --> 6/posicion (en la lista de Juegos)
 			if (codigo == 6)
 			{
 				p = strtok( NULL, "/");
 				int poslis = atoi(p);
+				//Modifica el estado del Juego a aceptada
 				mylist.Games[poslis].Sent = 2;
+				//Busca de nuevo la posicion del usuario en la lista de Conectados
 				int pos = GivePos(mylist.Games[poslis].Host);
+				//Si el Usuario sigue conectado y se encuentra la posicion dentro de la lista de Conectados se manda la aceptacion de la invitacion
 				if (pos != -1)
 				{
-					sprintf(respInv, "6/%d",1);					
+					sprintf(respInv, "6/%d",1);	
+					//Mensaje devuelto --> 6/1
 					printf("--------Respuesta Invitacion------------\n Respuesta Invitacion - %s\n------------------------\n",respInv);
 					write(milista.conectados[pos].socket,respInv,strlen(respInv));
 				}
 				strcpy(respuesta, "");
 			}
+			//Peticion de respuesta de la invitacion (rechazada)
+			//Mensaje recibido --> 7/posicion (en la lista de Juegos)
 			if (codigo == 7)
 			{
 				p = strtok( NULL, "/");
 				int poslis = atoi(p);
+				//Modifica el estado del Juego a rechazada
 				mylist.Games[poslis].Sent = 3;
+				//Busca de nuevo la posicion del usuario en la lista de Conectados
 				int pos = GivePos(mylist.Games[poslis].Host);
+				//Si el Usuario sigue conectado y se encuentra la posicion dentro de la lista de Conectados se manda el rechazo de la invitacion
 				if (pos != -1)
 				{
 					sprintf(respInv, ("6/%d",2));
+					//Mensaje devuelto --> 6/2
 					printf("--------Respuesta Invitacion------------\n Respuesta Invitacion - %s\n------------------------\n",respInv);
 					write(milista.conectados[pos].socket,respInv,strlen(respInv));
 				}
 				strcpy(respuesta, "");
 			}
+			//Peticion de Confirmacion de la partida a host y guest
+			//Mensaje recibido --> 8/posicion (en la lista de Juegos)
 			if (codigo == 8)
 			{
 				p = strtok( NULL, "/");
 				int g = atoi(p);
+				//Busca la posicion del Host dentro de la lista de Conectados
 				int pos = GivePos(mylist.Games[g].Host);
+				//Busca la posicion del Guest dentro de la lista de Conectados
 				int pos2 = GivePos(mylist.Games[g].Guest);
+				//Si se encuentran ambas se manda el mensaje de confirmacion de Juego
 				if ((pos != -1)&&(pos2 != -1))
 				{
 					sprintf(confInv,"7/%d/%s/%s",1,mylist.Games[g].Host,mylist.Games[g].Guest);
+					//mensaje devuelto --> 7/1 (indica que la partida ha sido aceptada) /nickname (host)/nickname (guest)
 					printf("--------Confirmacion Invitacion------------\n Respuesta Invitacion - %s\n------------------------\n",confInv);
 					write(milista.conectados[pos].socket,confInv,strlen(confInv));
 					write(milista.conectados[pos2].socket,confInv,strlen(confInv));

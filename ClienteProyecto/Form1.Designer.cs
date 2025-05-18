@@ -48,6 +48,7 @@
             CancelPanel = new Button();
             LogInPanel = new Button();
             panel2 = new Panel();
+            startBut = new Button();
             gameCancel = new Button();
             Guest = new Label();
             Host = new Label();
@@ -65,7 +66,6 @@
             rejectButton = new Button();
             nameInv = new Label();
             sendInv = new Button();
-            startBut = new Button();
             Panel.SuspendLayout();
             panel2.SuspendLayout();
             panelInv.SuspendLayout();
@@ -101,7 +101,7 @@
             // 
             // Sign
             // 
-            Sign.Location = new Point(708, 13);
+            Sign.Location = new Point(708, 12);
             Sign.Name = "Sign";
             Sign.Size = new Size(84, 34);
             Sign.TabIndex = 0;
@@ -171,6 +171,7 @@
             LogOut.TabIndex = 9;
             LogOut.Text = "Log Out";
             LogOut.UseVisualStyleBackColor = true;
+            LogOut.Visible = false;
             LogOut.Click += LogOut_Click;
             // 
             // Panel
@@ -184,10 +185,11 @@
             Panel.Controls.Add(SignInPanel);
             Panel.Controls.Add(CancelPanel);
             Panel.Controls.Add(LogInPanel);
-            Panel.Location = new Point(502, 1);
+            Panel.Location = new Point(501, 0);
             Panel.Name = "Panel";
             Panel.Size = new Size(300, 150);
             Panel.TabIndex = 10;
+            Panel.Visible = false;
             // 
             // label3
             // 
@@ -279,6 +281,20 @@
             panel2.Size = new Size(194, 264);
             panel2.TabIndex = 11;
             // 
+            // startBut
+            // 
+            startBut.BackColor = Color.Blue;
+            startBut.FlatStyle = FlatStyle.Flat;
+            startBut.ForeColor = Color.White;
+            startBut.Location = new Point(103, 225);
+            startBut.Name = "startBut";
+            startBut.Size = new Size(77, 34);
+            startBut.TabIndex = 9;
+            startBut.Text = "Start";
+            startBut.UseVisualStyleBackColor = false;
+            startBut.Visible = false;
+            startBut.Click += startBut_Click;
+            // 
             // gameCancel
             // 
             gameCancel.BackColor = Color.Red;
@@ -290,6 +306,7 @@
             gameCancel.TabIndex = 8;
             gameCancel.Text = "Cancel";
             gameCancel.UseVisualStyleBackColor = false;
+            gameCancel.Visible = false;
             gameCancel.Click += gameCancel_Click;
             // 
             // Guest
@@ -316,6 +333,7 @@
             game.Size = new Size(78, 25);
             game.TabIndex = 5;
             game.Text = "In Game";
+            game.Visible = false;
             // 
             // label4
             // 
@@ -451,19 +469,6 @@
             sendInv.Text = "Invitar";
             sendInv.UseVisualStyleBackColor = true;
             sendInv.Click += sendInv_Click;
-            // 
-            // startBut
-            // 
-            startBut.BackColor = Color.Blue;
-            startBut.FlatStyle = FlatStyle.Flat;
-            startBut.ForeColor = Color.White;
-            startBut.Location = new Point(103, 225);
-            startBut.Name = "startBut";
-            startBut.Size = new Size(77, 34);
-            startBut.TabIndex = 9;
-            startBut.Text = "Start";
-            startBut.UseVisualStyleBackColor = false;
-            startBut.Click += startBut_Click;
             // 
             // Form1
             // 
