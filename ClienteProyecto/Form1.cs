@@ -19,65 +19,88 @@ namespace ClienteProyecto
     {
         Socket server;
         Thread atender;
+        CancellationTokenSource cts;
         public bool sesion;
         public string nickCons;
         public string nickUsu;
         public int pos;
+        public List<string> jugadoresConectados = new List<string>();
+        List<Form2> formularios = new List<Form2>();
+        public bool cargado;
 
         public Form1()
         {
             InitializeComponent();
-            CheckForIllegalCrossThreadCalls = false; //Necesario para que los elementos de los formularios puedan ser
-            //accedidos desde threads diferentes a los que los crearon
             sesion = false;
-            List<string> jugadoresConectados = new List<string>();
+            List<string> Info = new List<string>() {"Información Usuario","Historial de Partidas"};
+            consultBox.DataSource = Info;
         }
-        private void AtenderServidor()
+        private void AtenderServidor(CancellationToken token)
         {
-            while (true)
+            while (!token.IsCancellationRequested)
             {
-                //Recibimos mensaje del servidor
-                byte[] msg2 = new byte[80];
-                server.Receive(msg2);
-                // Dividimos el texto en fragmentos dentro de un vector para poder extraer el número del código.
-                string[] trozos = Encoding.ASCII.GetString(msg2).Split('/');
-                int codigo = Convert.ToInt32(trozos[0]);
-                switch (codigo)
+                try
                 {
-                    case 1:  // Respuesta de la función de register.
-                        string mensaje1 = trozos[1].Split('\0')[0];
-                        if (mensaje1 == "1")
-                        {
-                            // Cuando el servidor devuelve un 1 para indicar que el registro se completa sin ningún error.
-                            MessageBox.Show("Registro completado.");
-                        }
-                        else if (mensaje1 == "2")
-                        {
-                            // Cuando el servidor devuelve un 2 para indicar que el nickname proporcionado ya está en uso.
-                            MessageBox.Show("Nickname ya usado.");
-                        }
-                        else
-                        {
-                            // Cualquier otro error ocurrido en el servidor.
-                            MessageBox.Show("Error al registrarse.");
-                        }
-                        break;
-                    case 2:      //Respuesta función Log In.
-                        this.Invoke((MethodInvoker)delegate
-                        {
-                            string mensaje2 = trozos[1].Split('\0')[0];
-                            if (mensaje2 == "1")
+                    //Recibimos mensaje del servidor
+                    byte[] msg2 = new byte[80];
+                    server.Receive(msg2);
+                    // Dividimos el texto en fragmentos dentro de un vector para poder extraer el número del código.
+                    string[] trozos = Encoding.ASCII.GetString(msg2).Split('/');
+                    int codigo = Convert.ToInt32(trozos[0]);
+                    string mensaje = trozos[1].Split('\0')[0];
+                    switch (codigo)
+                    {
+                        case 0:
+                            this.Invoke((MethodInvoker)delegate
+                            {
+                                cts.Cancel();           // Señala al hilo que debe terminar
+                                server.Shutdown(SocketShutdown.Both);
+                                server.Close();
+                                panel1.BackColor = Color.Red;
+                                Desconn.Visible = false;
+                                Conn.Visible = true;
+                            });
+                            break;
+                        case 1:  // Respuesta de la función de register.
+                            if (mensaje == "1")
+                            {
+                                // Cuando el servidor devuelve un 1 para indicar que el registro se completa sin ningún error.
+                                MessageBox.Show("Registro completado.");
+                            }
+                            else if (mensaje == "2")
+                            {
+                                // Cuando el servidor devuelve un 2 para indicar que el nickname proporcionado ya está en uso.
+                                MessageBox.Show("Nickname ya usado.");
+                            }
+                            else
+                            {
+                                // Cualquier otro error ocurrido en el servidor.
+                                MessageBox.Show("Error al registrarse.");
+                            }
+                            break;
+                        case 2:      //Respuesta función Log In.
+                            if (mensaje == "1")
                             {
                                 // Cuando el servidor devuelve un 1 para indicar que la sesión se ha iniciado correctamente,
                                 // se realizan algunos cambios visuales en el cliente.
-                                LogOut.Visible = true;
-                                Log.Visible = false;
-                                Sign.Visible = false;
-                                sesion = true;
-                                Nickname_player.Text = nickUsu;
+
+                                this.Invoke((MethodInvoker)delegate
+                                {
+                                    nickUsu = nicktxtpanel.Text;
+                                    // Vacía el texto introducido anteriormente y oculta el panel.
+                                    nicktxtpanel.Text = null;
+                                    passtxtpanel.Text = null;
+                                    Panel.Visible = false;
+                                    LogOut.Visible = true;
+                                    Log.Visible = false;
+                                    Sign.Visible = false;
+                                    SingOutButt.Visible = true;
+                                    sesion = true;
+                                    Nickname_player.Text = nickUsu;
+                                });
                                 MessageBox.Show("Sesión iniciada.");
                             }
-                            else if (mensaje2 == "2")
+                            else if (mensaje == "2")
                             {
                                 // Cuando el servidor devuelve un 2 para indicar que el nickname no se encuentra en la base de datos.
                                 MessageBox.Show("Nickname incorrecto.");
@@ -87,110 +110,161 @@ namespace ClienteProyecto
                                 // Cuando el servidor devuelve un 3 para indicar que la contraseña proporcionada para ese usuario no es correcta.
                                 MessageBox.Show("Password incorrecto.");
                             }
-                        });
-                        break;
-                    case 3:  //Respuesta función Consulta
-                        string mensaje3 = trozos[1].Split('\0')[0];
-                        if (mensaje3 == "N")
-                        {
-                            // Cuando el servidor devuelve una "N" para indicar que el nickname no se ha encontrado en la base de datos.
-                            MessageBox.Show("Nombre no econtrado en la base de datos.");
-                        }
-                        else
-                        {
-                            // Cuando el servidor devuelve algo distinto de una "N", proporcionando los datos del usuario solicitado.
-                            string[] partes = trozos.Skip(1).ToArray();
-
-                            // Crear un mensaje combinado para mostrar en el MessageBox
-                            string mensajeMostrar = string.Join(Environment.NewLine, partes);
-
-                            // Mostrar el mensaje en un MessageBox
-                            MessageBox.Show(mensajeMostrar, "Datos de" + nickCons);
-                            nickCons = null;
-                        }
-                        break;
-                    case 4:  //Notificación
-                        string mensaje4 = trozos[1].Split('\0')[0];
-                        if (mensaje4 == "N")
-                        {
-                            // Cuando el servidor devuelve una "N" para indicar que no hay ningún usuario conectado.
-                            // Vacía el texto de todos los labels.
-                            int j = 4;
-                            Label[] playerslab = new Label[] { player1, player2, player3, player4 };
-                            for (int i = 0; i < j; i++)
+                            break;
+                        case 3:  //Respuesta función Consulta
+                            if (mensaje == "N")
                             {
-                                playerslab[i].Text = null;
+                                // Cuando el servidor devuelve una "N" para indicar que el nickname no se ha encontrado en la base de datos.
+                                MessageBox.Show("Nombre no econtrado en la base de datos.");
                             }
-                            List<string> jugadoresConectados = new List<string>();
-                            jugadoresConectados.Clear();
-                            comboBoxJugadores.DataSource = jugadoresConectados;
-                        }
-                        else
-                        {
-                            // Cuando el servidor devuelve algo distinto de "N", indicando que hay usuarios conectados.
-                            // Rellena el texto de todos los labels con los nicknames recibidos.
-                            string[] partes = trozos.Skip(2).ToArray();
-                            int j = Convert.ToInt32(mensaje4);
-                            Label[] playerslab = new Label[] { player1, player2, player3, player4 };
-                            List<string> jugadoresConectados = new List<string>();
-                            for (int i = 0; i < j; i++)
+                            else
                             {
-                                playerslab[i].Text = partes[i];
-                                if (partes[i] != nickUsu)
+                                // Cuando el servidor devuelve algo distinto de una "N", proporcionando los datos del usuario solicitado.
+                                string[] partes1 = trozos.Skip(1).ToArray();
+
+                                // Mostrar el mensaje en un MessageBox
+                                MessageBox.Show("Datos de " + nickCons + "\n" + "ID: " + partes1[0] + "\n" + "Nickname: " + partes1[1] + "\n" + "Total Score: " + partes1[2]);
+                                this.Invoke((MethodInvoker)delegate
                                 {
-                                    jugadoresConectados.Add(partes[i]);
-                                }
+                                    nickCons = null;
+                                });
+                            }
+                            break;
+                        case 4:  //Notificación
+                            if (mensaje == "N")
+                            {
+                                // Cuando el servidor devuelve una "N" para indicar que no hay ningún usuario conectado.
+                                // Vacía el texto de todos los labels.
+                                int j = 4;
+                                Label[] playerslab = new Label[] { player1, player2, player3, player4 };
+                                this.Invoke((MethodInvoker)delegate
+                                {
+                                    for (int i = 0; i < j; i++)
+                                    {
+                                        playerslab[i].Text = null;
+                                    }
+                                    jugadoresConectados.Clear();
+                                    comboBoxJugadores.DataSource = null;
+                                    comboBoxJugadores.DataSource = jugadoresConectados;
+                                });
+                            }
+                            else
+                            {
+                                // Cuando el servidor devuelve algo distinto de "N", indicando que hay usuarios conectados.
+                                // Rellena el texto de todos los labels con los nicknames recibidos.
+                                string[] partes2 = string.Join("/", trozos.Skip(2)).Split('\0')[0].Split('/');
+                                int j = Convert.ToInt32(trozos[1]);
+                                Label[] playerslab = new Label[] { player1, player2, player3, player4 };
+                                jugadoresConectados.Clear();
+
+                                this.Invoke((MethodInvoker)delegate
+                                {
+                                    int labelIndex = 0;
+                                    for (int i = 0; i < partes2.Length; i++)
+                                    {
+                                        if (partes2[i] != nickUsu)
+                                        {
+                                            playerslab[labelIndex].Text = partes2[i];
+                                            jugadoresConectados.Add(partes2[i]);
+                                            labelIndex++;
+                                        }
+                                    }
+
+                                    // Vacía los labels restantes
+                                    for (int k = labelIndex; k < playerslab.Length; k++)
+                                    {
+                                        playerslab[k].Text = null;
+                                    }
+
+                                    comboBoxJugadores.DataSource = null;
+                                    comboBoxJugadores.DataSource = jugadoresConectados;
+                                });
 
                             }
-                            comboBoxJugadores.DataSource = jugadoresConectados;
-
-                        }
-                        break;
-                    case 5:
-                        this.Invoke((MethodInvoker)delegate
-                        {
-                            panelInv.Visible = true;
-                            cancelInv.Visible = false;
-                            rejectButton.Visible = true;
-                            acceptButton.Visible = true;
-                            sendInvbut.Visible = false;
+                            break;
+                        case 5:
                             string[] partes = trozos.Skip(1).ToArray();
-                            nameInv.Text = "Invitacion de " + partes[0];
-                            pos = Convert.ToInt32(partes[1]);
-                        });
-                        break;
-                    case 6:
-                        string mensaje5 = trozos[1].Split('\0')[0];
-                        if (mensaje5 == "1")
-                        {
-                            string mensaje = "8/" + pos;
-                            byte[] msg = Encoding.ASCII.GetBytes(mensaje);
-                            server.Send(msg);
-                        }
-                        break;
-                    case 7:
-                        this.Invoke((MethodInvoker)delegate
-                        {
+                            this.Invoke((MethodInvoker)delegate
+                            {
+                                panelInv.Visible = true;
+                                cancelInv.Visible = false;
+                                rejectButton.Visible = true;
+                                acceptButton.Visible = true;
+                                sendInvbut.Visible = false;
+                                nameInv.Text = "Invitacion de " + partes[0];
+                                pos = Convert.ToInt32(partes[1]);
+                            });
+                            break;
+                        case 6:
+                            if (mensaje == "1")
+                            {
+                                string mensaje1 = "8/" + pos;
+                                byte[] msg = Encoding.ASCII.GetBytes(mensaje1);
+                                server.Send(msg);
+                            }
+                            break;
+                        case 7:
                             if (trozos[1] == "1")
                             {
                                 MessageBox.Show("Partida Aceptada");
-                                gameCancel.Visible = true;
-                                startBut.Visible = true;
-                                game.Visible = true;
-                                player1.Visible = false;
-                                player2.Visible = false;
-                                player3.Visible = false;
-                                player4.Visible = false;
-                                label4.Visible = false;
-                                Host.Text = trozos[2];
-                                Guest.Text = trozos[3];
+                                this.Invoke((MethodInvoker)delegate
+                                {
+                                    gameCancel.Visible = true;
+                                    startBut.Visible = true;
+                                    game.Visible = true;
+                                    player1.Visible = false;
+                                    player2.Visible = false;
+                                    player3.Visible = false;
+                                    player4.Visible = false;
+                                    label4.Visible = false;
+                                    Host.Text = trozos[2];
+                                    Guest.Text = trozos[3];
+                                });
                             }
                             else
                             {
                                 MessageBox.Show("Partida Rechazada");
                             }
-                        });
-                        break;
+                            break;
+                        case 8:
+                            if (mensaje == "1")
+                            {
+                                this.Invoke((MethodInvoker)delegate
+                                {
+                                    Nickname_player.Text = null;
+                                    LogOut.Visible = false;
+                                    Log.Visible = true;
+                                    Sign.Visible = true;
+                                    SingOutButt.Visible = false;
+                                    sesion = false;
+                                });
+                            }
+                            break;
+                        case 9:
+                            string usu = trozos[3].Split('\0')[0];
+                            string usuario = trozos[2].Split('\0')[0];
+                            if (mensaje != "Error")
+                            {
+                                this.Invoke((MethodInvoker)delegate
+                                {
+                                    respMens1(mensaje, usu, usuario);
+                                });
+                            }
+                            else
+                            {
+                                this.Invoke((MethodInvoker)delegate
+                                {
+                                    string mensaje2 = trozos[3].Split('\0')[0];
+                                    respMens2(mensaje2, usu, usuario);
+                                });
+                            }
+                            break;
+                    }
+                }
+                catch (SocketException ex)
+                {
+                    Console.WriteLine("Error de socket: " + ex.Message);
+                    break;
                 }
             }
         }
@@ -199,7 +273,7 @@ namespace ClienteProyecto
             //Creamos un IPEndPoint con el ip del servidor y puerto del servidor 
             //al que deseamos conectarnos
             IPAddress direc = IPAddress.Parse("192.168.56.101");
-            IPEndPoint ipep = new IPEndPoint(direc, 9020);
+            IPEndPoint ipep = new IPEndPoint(direc, 9070);
 
 
             //Creamos el socket 
@@ -215,9 +289,10 @@ namespace ClienteProyecto
                 Desconn.Visible = true;
 
                 //Pongo en marcha el thread que atenderá los mensajes del servidor.
-                ThreadStart ts = delegate { AtenderServidor(); };
-                atender = new Thread(ts);
+                cts = new CancellationTokenSource();
+                atender = new Thread(() => AtenderServidor(cts.Token));
                 atender.Start();
+
             }
             catch (SocketException ex)
             {
@@ -233,17 +308,6 @@ namespace ClienteProyecto
 
             byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
             server.Send(msg);
-
-            this.Invoke((MethodInvoker)delegate
-            {
-                // Nos desconectamos
-                atender.Abort();
-                panel1.BackColor = Color.Red;
-                Desconn.Visible = false;
-                Conn.Visible = true;
-                server.Shutdown(SocketShutdown.Both);
-                server.Close();
-            });
         }
 
         private void Log_Click(object sender, EventArgs e)
@@ -277,7 +341,17 @@ namespace ClienteProyecto
                 // Comprueba si la sesión está iniciada. Es un requisito para poder consultar datos.
                 if (sesion == true)
                 {
-                    string mensaje = "3/" + nickConsBox.Text;
+                    string Infor = consultBox.SelectedItem.ToString();
+                    int a = 2;
+                    if(Infor == "Información Usuario")
+                    {
+                        a = 11;
+                    }
+                    else if(Infor == "Historial de Partidas")
+                    {
+                        a = 12;
+                    }
+                    string mensaje = "3/" + a + "/" + nickConsBox.Text;
                     // Enviamos al servidor el nombre tecleado
                     byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
                     server.Send(msg);
@@ -311,6 +385,7 @@ namespace ClienteProyecto
             LogOut.Visible = false;
             Log.Visible = true;
             Sign.Visible = true;
+            SingOutButt.Visible = false;
             sesion = false;
         }
 
@@ -357,11 +432,6 @@ namespace ClienteProyecto
                 // Enviamos al servidor el nombre tecleado y la contraseña
                 byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
                 server.Send(msg);
-                nickUsu = nicktxtpanel.Text;
-                // Vacía el texto introducido anteriormente y oculta el panel.
-                nicktxtpanel.Text = null;
-                passtxtpanel.Text = null;
-                Panel.Visible = false;
             }
         }
 
@@ -436,6 +506,81 @@ namespace ClienteProyecto
         private void startBut_Click(object sender, EventArgs e)
         {
             MessageBox.Show("No hay funcion");
+        }
+
+        private void SingOutButt_Click(object sender, EventArgs e)
+        {
+            DialogResult result = MessageBox.Show("¿Estás seguro de que quieres eliminar el usuario?","Confirmación",MessageBoxButtons.OKCancel,MessageBoxIcon.Question);
+
+            if (result == DialogResult.OK)
+            {
+                // El usuario hizo clic en Aceptar
+                string mensaje = "9/" + nickUsu;
+                byte[] msg = Encoding.ASCII.GetBytes(mensaje);
+                server.Send(msg);
+            }
+            else
+            {
+                // El usuario hizo clic en Cancelar
+                // No haces nada
+            }
+        }
+
+        private void chatButt_Click(object sender, EventArgs e)
+        {
+            CancellationTokenSource cts2 = new CancellationTokenSource();
+            Thread newForm = new Thread(() => NuevoForm(cts2.Token));
+            newForm.Start();
+        }
+
+        public void NuevoForm(CancellationToken token)
+        {
+            int cont = formularios.Count;
+            Form2 f = new Form2(server, jugadoresConectados, nickUsu);
+            if(cont < 1)
+            {
+                formularios.Add(f);
+            }
+            f.ShowDialog();
+        }
+        public void respMens1(string mensaje, string usu, string usuario)
+        {
+            string nombreLimpio = SanearNombreArchivo(usu);
+            string ruta = Path.Combine(Application.StartupPath, nombreLimpio + ".txt");
+            string menstxt = usu + ": " + mensaje;
+            File.AppendAllText(ruta, menstxt + Environment.NewLine);
+        }
+        public void respMens2(string mensaje, string usu, string usuario)
+        {
+            string nombreLimpio = SanearNombreArchivo(usuario);
+            string ruta = Path.Combine(Application.StartupPath, nombreLimpio + ".txt");
+
+            if (!File.Exists(ruta))
+                return;
+
+            // Leer todas las líneas del archivo
+            string[] lineas = File.ReadAllLines(ruta);
+
+            for (int i = 0; i < lineas.Length; i++)
+            {
+                // Si la línea contiene el mensaje original y aún no está marcada como error
+                if (lineas[i].Contains(mensaje) && !lineas[i].Contains("(error)"))
+                {
+                    lineas[i] += " (error)";
+                    break; // Solo modificamos la primera coincidencia
+                }
+            }
+
+            // Sobrescribir el archivo con las líneas modificadas
+            File.WriteAllLines(ruta, lineas);
+        }
+        private string SanearNombreArchivo(string nombre)
+        {
+            foreach (char c in Path.GetInvalidFileNameChars())
+            {
+                nombre = nombre.Replace(c, '_'); // Reemplaza caracteres ilegales por guiones bajos
+            }
+            return nombre;
         }
     }
 }

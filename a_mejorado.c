@@ -132,10 +132,10 @@ void *AtenderCliente(void *socket) {
 	
 	char peticion[512];         // Mensaje recibido del cliente
 	char respuesta[512];        // Mensaje de respuesta al cliente
-	char notificacion[512];     // Mensaje de notificacion general
 	char invitacion[512];       // Invitacion a jugar
 	char respInv[512];          // Respuesta a la invitacion
 	char confInv[512];          // Confirmacion de partida
+	char chats[512];
 	int ret;
 	int terminar = 0;           // Flag para controlar la desconexion del cliente
 	
@@ -150,14 +150,18 @@ void *AtenderCliente(void *socket) {
 		
 		// Variables auxiliares
 		char nick[25];
+		char nick2[25];
 		char pass[10];
 		char respt[100];
 		char conectados[300];
+		char mensaje[90];
 		
 		// Procesamiento segun el codigo recibido
 		if (codigo == 0) 
 		{
 			// Codigo 0: solicitud de desconexion
+			strcpy(respuesta, "0/OK");
+			write(sock_conn, respuesta, strlen(respuesta)); // Enviar confirmación
 			terminar = 1;
 		} 
 		else if (codigo == 1) 
@@ -177,6 +181,8 @@ void *AtenderCliente(void *socket) {
 			{
 				strcpy(respuesta, "1/2"); // Nickname en uso
 			}
+			printf("--------Respuesta---------\n Respuesta - %s\n-------------------\n", respuesta);
+			write(sock_conn, respuesta, strlen(respuesta));
 		} 
 		else if (codigo == 2) 
 		{
@@ -202,13 +208,18 @@ void *AtenderCliente(void *socket) {
 					strcpy(respuesta, "2/3"); // Contrasena incorrecta
 				}
 			}
+			printf("--------Respuesta---------\n Respuesta - %s\n-------------------\n", respuesta);
+			write(sock_conn, respuesta, strlen(respuesta));
 		} 
 		else if (codigo == 3) 
 		{
-			// Codigo 3: consulta de datos del usuario (3/nickname)
+			// Codigo 3: consulta de datos del usuario (3/tipo de consulta/nickname)
+			int cod;
+			p = strtok(NULL, "/");
+			cod = atoi(p);
 			p = strtok(NULL, "/");
 			strcpy(nick, p);
-			Consulta(respt, nick, codigo);
+			Consulta(respt, nick, cod);
 			if (respt != NULL && respt[0] != '\0') 
 			{
 				// Usuario encontrado, se devuelven los datos
@@ -218,7 +229,9 @@ void *AtenderCliente(void *socket) {
 			{
 				// Usuario no encontrado
 				strcpy(respuesta, "3/N");
-			} 
+			}
+			printf("--------Respuesta---------\n Respuesta - %s\n-------------------\n", respuesta);
+			write(sock_conn, respuesta, strlen(respuesta));
 		}
 		else if (codigo == 4) 
 		{
@@ -227,7 +240,6 @@ void *AtenderCliente(void *socket) {
 			strcpy(nick, p);
 			printf("-------------- Funcion Log Out ---------------\n Nickname - %s:\n--------------------------\n", nick);
 			Delete(nick); // Se elimina al usuario de la lista de conectados
-			strcpy(respuesta, ""); // No se envia respuesta
 		}
 		else if (codigo == 5) 
 		{
@@ -240,7 +252,6 @@ void *AtenderCliente(void *socket) {
 			strcpy(mylist.Games[mylist.num].Guest, nick); // Guardamos el guest
 			mylist.Games[mylist.num].Sent = 0; // Estado inicial de la invitacion
 			mylist.num++; // Incrementamos el numero de juegos en lista
-			strcpy(respuesta, ""); // No se envia respuesta al host por ahora
 			
 			// Enviamos la invitacion si el usuario invitado esta conectado
 			for (int c = 0; c < mylist.num; c++) 
@@ -271,7 +282,6 @@ void *AtenderCliente(void *socket) {
 				printf("--------Respuesta Invitacion------------\n Respuesta Invitacion - %s\n------------------------\n", respInv);
 				write(milista.conectados[pos].socket, respInv, strlen(respInv));
 			}
-			strcpy(respuesta, "");
 		} 
 		else if (codigo == 7) 
 		{
@@ -286,7 +296,6 @@ void *AtenderCliente(void *socket) {
 				printf("--------Respuesta Invitacion------------\n Respuesta Invitacion - %s\n------------------------\n", respInv);
 				write(milista.conectados[pos].socket, respInv, strlen(respInv));
 			}
-			strcpy(respuesta, "");
 		} 
 		else if (codigo == 8) 
 		{
@@ -303,17 +312,43 @@ void *AtenderCliente(void *socket) {
 				write(milista.conectados[pos].socket, confInv, strlen(confInv));
 				write(milista.conectados[pos2].socket, confInv, strlen(confInv));
 			}
-			strcpy(respuesta, "");
-		}// Envio de respuesta general si aplica (para codigos distintos de 0)
+		}
+		else if (codigo == 9)
+		{
+			p = strtok(NULL, "/");
+			strcpy(nick, p);
+			printf("-------------- Funcion Sign Out ---------------\n Nickname - %s:\n--------------------------\n", nick);
+			Delete(nick);
+			strcpy(respuesta, "8/1");
+			printf("--------Respuesta---------\n Respuesta - %s\n-------------------\n", respuesta);
+			write(sock_conn, respuesta, strlen(respuesta));			
+		}
+		else if (codigo == 10)
+		{
+			p = strtok(NULL, "/");
+			strcpy(nick2, p);
+			p = strtok(NULL, "/");
+			strcpy(nick, p);
+			int pos = GivePos(nick);
+			if (pos != -1)
+			{
+				p = strtok(NULL, "/");
+				strcpy(mensaje,p);
+				sprintf(chats, "9/%s/%s/%s", mensaje, nick2, nick);
+				printf("-------------- Funcion Chat ---------------\n Mensaje - %s:\n--------------------------\n", mensaje);
+				write(milista.conectados[pos].socket, chats, strlen(chats));
+			}
+			else
+			{
+				sprintf(chats, "9/%s/%s/%s/%s", "Error", nick2, nick, mensaje);
+				printf("-------------- Funcion Chat Error ---------------\n Mensaje - %s:\n--------------------------\n", mensaje);
+				write(sock_conn, chats, strlen(chats));
+			}
+		}
+		// Envio de notificaciones a todos los usuarios conectados
 		if (codigo != 0) 
 		{
-			printf("--------Respuesta---------\n Respuesta - %s\n-------------------\n", respuesta);
-			write(sock_conn, respuesta, strlen(respuesta));
-		}
-		
-		// Envio de notificaciones a todos los usuarios conectados
-		if ((codigo == 1) || (codigo == 2) || (codigo == 3) || (codigo == 4) || (codigo == 5)) 
-		{
+			char notificacion[512];     // Mensaje de notificacion general
 			pthread_mutex_lock(&mutex); // Proteccion de la variable compartida
 			contador = contador + 1;
 			pthread_mutex_unlock(&mutex);
@@ -386,13 +421,13 @@ void Consulta(char* respt, char nick[25], int tipo) {
 		strcat(consulta, nick);
 		strcat(consulta, "'");
 	} 
-	else if (tipo == 3) 
+	else if (tipo == 11) 
 	{
-		strcpy(consulta, "SELECT * FROM DB_players WHERE Nickname = '");
+		strcpy(consulta, "SELECT ID_PLAYER, NICKNAME, Total_Score FROM DB_players WHERE Nickname = '");
 		strcat(consulta, nick);
 		strcat(consulta, "'");
 	}
-	
+	//Consulta tipo 12
 	err = mysql_query(conn, consulta);
 	if (err != 0) 
 	{
@@ -431,9 +466,9 @@ void Consulta(char* respt, char nick[25], int tipo) {
 			{
 				strcpy(respt, row[1]); // Devuelve la contrasena
 			} 
-			else if (tipo == 3) 
+			else if (tipo == 11) 
 			{
-				sprintf(respt, "3/%s/%s/%s/%s", row[0], row[1], row[2], row[3]); // Devuelve datos completos
+				sprintf(respt, "3/%s/%s/%s", row[0], row[1], row[2]); // Devuelve datos completos
 			}
 			row = mysql_fetch_row(resultado);
 		}
@@ -480,7 +515,7 @@ int Add(char nick[25], char pass[10], char* respt) {
 // Funcion principal del servidor
 int main(int argc, char *argv[]) {
 	int sock_conn, sock_listen, ret;
-	int puerto = 9020; // Puerto del servidor
+	int puerto = 9070; // Puerto del servidor
 	struct sockaddr_in serv_adr;
 	char respuesta[512];
 	char peticion[512];

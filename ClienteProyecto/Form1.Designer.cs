@@ -66,6 +66,9 @@
             rejectButton = new Button();
             nameInv = new Label();
             sendInv = new Button();
+            chatButt = new Button();
+            SingOutButt = new Button();
+            consultBox = new ComboBox();
             Panel.SuspendLayout();
             panel2.SuspendLayout();
             panelInv.SuspendLayout();
@@ -101,7 +104,7 @@
             // 
             // Sign
             // 
-            Sign.Location = new Point(708, 12);
+            Sign.Location = new Point(705, 13);
             Sign.Name = "Sign";
             Sign.Size = new Size(84, 34);
             Sign.TabIndex = 0;
@@ -157,7 +160,7 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(295, 204);
+            label1.Location = new Point(295, 208);
             label1.Name = "label1";
             label1.Size = new Size(94, 25);
             label1.TabIndex = 8;
@@ -165,7 +168,7 @@
             // 
             // LogOut
             // 
-            LogOut.Location = new Point(704, 12);
+            LogOut.Location = new Point(610, 12);
             LogOut.Name = "LogOut";
             LogOut.Size = new Size(88, 34);
             LogOut.TabIndex = 9;
@@ -185,7 +188,7 @@
             Panel.Controls.Add(SignInPanel);
             Panel.Controls.Add(CancelPanel);
             Panel.Controls.Add(LogInPanel);
-            Panel.Location = new Point(501, 0);
+            Panel.Location = new Point(508, 1);
             Panel.Name = "Panel";
             Panel.Size = new Size(300, 150);
             Panel.TabIndex = 10;
@@ -386,7 +389,7 @@
             panelInv.Controls.Add(acceptButton);
             panelInv.Controls.Add(rejectButton);
             panelInv.Controls.Add(nameInv);
-            panelInv.Location = new Point(295, 139);
+            panelInv.Location = new Point(342, 157);
             panelInv.Name = "panelInv";
             panelInv.Size = new Size(286, 175);
             panelInv.TabIndex = 12;
@@ -462,7 +465,7 @@
             // 
             // sendInv
             // 
-            sendInv.Location = new Point(556, 239);
+            sendInv.Location = new Point(248, 404);
             sendInv.Name = "sendInv";
             sendInv.Size = new Size(107, 36);
             sendInv.TabIndex = 13;
@@ -470,12 +473,43 @@
             sendInv.UseVisualStyleBackColor = true;
             sendInv.Click += sendInv_Click;
             // 
+            // chatButt
+            // 
+            chatButt.Location = new Point(130, 404);
+            chatButt.Name = "chatButt";
+            chatButt.Size = new Size(112, 34);
+            chatButt.TabIndex = 14;
+            chatButt.Text = "Chat";
+            chatButt.UseVisualStyleBackColor = true;
+            chatButt.Click += chatButt_Click;
+            // 
+            // SingOutButt
+            // 
+            SingOutButt.Location = new Point(704, 13);
+            SingOutButt.Name = "SingOutButt";
+            SingOutButt.Size = new Size(92, 34);
+            SingOutButt.TabIndex = 15;
+            SingOutButt.Text = "Sign Out";
+            SingOutButt.UseVisualStyleBackColor = true;
+            SingOutButt.Visible = false;
+            SingOutButt.Click += SingOutButt_Click;
+            // 
+            // consultBox
+            // 
+            consultBox.FormattingEnabled = true;
+            consultBox.Location = new Point(381, 238);
+            consultBox.Name = "consultBox";
+            consultBox.Size = new Size(200, 33);
+            consultBox.TabIndex = 16;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 450);
+            ClientSize = new Size(801, 456);
             Controls.Add(panelInv);
+            Controls.Add(consultBox);
+            Controls.Add(chatButt);
             Controls.Add(sendInv);
             Controls.Add(panel2);
             Controls.Add(Panel);
@@ -490,6 +524,7 @@
             Controls.Add(Conn);
             Controls.Add(Desconn);
             Controls.Add(LogOut);
+            Controls.Add(SingOutButt);
             Name = "Form1";
             Text = "Form1";
             Panel.ResumeLayout(false);
@@ -543,5 +578,9 @@
         private Label game;
         private Button gameCancel;
         private Button startBut;
+        private Button chat;
+        private Button chatButt;
+        private Button SingOutButt;
+        private ComboBox consultBox;
     }
 }
