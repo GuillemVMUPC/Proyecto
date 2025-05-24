@@ -46,13 +46,11 @@ GameList mylist;            // Lista de juegos en fase de invitacion
 
 // Funcion que construye un mensaje con la lista de usuarios conectados
 void GiveConnected(char conectados[300]) {
-	// Agrega el numero total de conectados al inicio del mensaje
 	sprintf(conectados, "4/%d", milista.num);
 	int i;
-	for (i = 0; i < milista.num; i++) 
-	{
-		// Concatena el nombre de cada usuario conectado
-		sprintf(conectados, "%s/%s", conectados, milista.conectados[i].nombre);
+	for (i = 0; i < milista.num; i++) {
+		strcat(conectados, "/");
+		strcat(conectados, milista.conectados[i].nombre);
 	}
 }
 
@@ -375,6 +373,7 @@ void *AtenderCliente(void *socket) {
 				printf("---------Notificacion------------\n Notificacion - %s\n-------------------\n", notificacion);
 				write(sockets[j], notificacion, strlen(notificacion));
 			}
+			conectados[0] = '\0';			
 		}
 	} // Fin del while
 	
@@ -515,7 +514,7 @@ int Add(char nick[25], char pass[10], char* respt) {
 // Funcion principal del servidor
 int main(int argc, char *argv[]) {
 	int sock_conn, sock_listen, ret;
-	int puerto = 9070; // Puerto del servidor
+	int puerto = 9080; // Puerto del servidor
 	struct sockaddr_in serv_adr;
 	char respuesta[512];
 	char peticion[512];

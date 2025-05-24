@@ -273,7 +273,7 @@ namespace ClienteProyecto
             //Creamos un IPEndPoint con el ip del servidor y puerto del servidor 
             //al que deseamos conectarnos
             IPAddress direc = IPAddress.Parse("192.168.56.101");
-            IPEndPoint ipep = new IPEndPoint(direc, 9070);
+            IPEndPoint ipep = new IPEndPoint(direc, 9080);
 
 
             //Creamos el socket 
@@ -545,14 +545,33 @@ namespace ClienteProyecto
         }
         public void respMens1(string mensaje, string usu, string usuario)
         {
-            string nombreLimpio = SanearNombreArchivo(usu);
+            string nom = usuario + usu;
+            string nombreLimpio = SanearNombreArchivo(nom);
             string ruta = Path.Combine(Application.StartupPath, nombreLimpio + ".txt");
-            string menstxt = usu + ": " + mensaje;
-            File.AppendAllText(ruta, menstxt + Environment.NewLine);
+            string menstxt = usuario + ": " + mensaje;
+            using (StreamWriter writer = new StreamWriter(ruta, true))
+            {
+                writer.WriteLine(menstxt);
+            }
+            bool cargadoExitosamente = false;
+            for (int intento = 0; intento < 5 && !cargadoExitosamente; intento++)
+            {
+                try
+                {
+                    formularios[0].LoadMens(usuario, usu);
+                    cargadoExitosamente = true;
+                }
+                catch (IOException)
+                {
+                    Thread.Sleep(50); // esperar antes de reintentar
+                }
+            }
+
         }
         public void respMens2(string mensaje, string usu, string usuario)
         {
-            string nombreLimpio = SanearNombreArchivo(usuario);
+            string nom = usu + usuario;
+            string nombreLimpio = SanearNombreArchivo(nom);
             string ruta = Path.Combine(Application.StartupPath, nombreLimpio + ".txt");
 
             if (!File.Exists(ruta))
@@ -571,8 +590,27 @@ namespace ClienteProyecto
                 }
             }
 
-            // Sobrescribir el archivo con las líneas modificadas
-            File.WriteAllLines(ruta, lineas);
+            using (var writer = new StreamWriter(ruta, false))
+            {
+                foreach (string linea in lineas)
+                {
+                    writer.WriteLine(linea);
+                }
+            }
+            bool cargadoExitosamente = false;
+            for (int intento = 0; intento < 5 && !cargadoExitosamente; intento++)
+            {
+                try
+                {
+                    formularios[0].LoadMens(usu, usuario);
+                    cargadoExitosamente = true;
+                }
+                catch (IOException)
+                {
+                    Thread.Sleep(50); // esperar antes de reintentar
+                }
+            }
+
         }
         private string SanearNombreArchivo(string nombre)
         {

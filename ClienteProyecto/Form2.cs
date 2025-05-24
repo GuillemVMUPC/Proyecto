@@ -33,6 +33,7 @@ namespace ClienteProyecto
         {
             if((!string.IsNullOrEmpty(txtSend.Text)) && cargado == true)
             {
+                string nom = usu + usuario;
                 string mens = FormatearMensaje(txtSend.Text);
                 int longi = mens.Length;
                 if (longi > 80)
@@ -46,14 +47,18 @@ namespace ClienteProyecto
                     byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
                     server.Send(msg);
                     // Guardamos en el archivo
-                    string nombreLimpio = SanearNombreArchivo(usu);
+                    string nombreLimpio = SanearNombreArchivo(nom);
                     string ruta = Path.Combine(Application.StartupPath, nombreLimpio + ".txt");
                     string menstxt = "Yo: " + txtSend.Text;
-                    File.AppendAllText(ruta, menstxt + Environment.NewLine);
+                    using (StreamWriter writer = new StreamWriter(ruta, true))
+                    {
+                        writer.WriteLine(menstxt);
+                    }
+
 
                     // Limpiamos el campo de texto
+                    LoadMens(usu, usuario);
                     txtSend.Clear();
-                    LoadMens(usu);
                 }
             }
             else if (cargado == true)
@@ -81,7 +86,7 @@ namespace ClienteProyecto
             else
             {
                 cargado = true;
-                LoadMens(usu);
+                LoadMens(usu, usuario); //envio , enviador
             }
         }
         private string SanearNombreArchivo(string nombre)
@@ -99,31 +104,42 @@ namespace ClienteProyecto
             this.Close();
         }
 
-        private void LoadMens(string usu)
+        public void LoadMens(string usu, string usuario)
         {
-            if (cargado = true)
+            if (cargado)
             {
-                string nombreLimpio = SanearNombreArchivo(usu);
+                string nom = usu + usuario;
+                string nombreLimpio = SanearNombreArchivo(nom);
                 string ruta = Path.Combine(Application.StartupPath, nombreLimpio + ".txt");
 
-                if (File.Exists(ruta))
-                {
-                    txtRead.Text = File.ReadAllText(ruta);
-                }
-
-                // Si no existe, lo creamos vacío de forma segura
                 if (!File.Exists(ruta))
                 {
-                    File.WriteAllText(ruta, string.Empty);  // Crea y escribe texto vacío
+                    using (var fs = File.Create(ruta)) { }
                 }
-
-                // Ahora leemos el contenido (aunque esté vacío)
-                txtRead.Text = File.ReadAllText(ruta);
+                for (int intento = 0; intento < 5; intento++)
+                {
+                    try
+                    {
+                        using (var reader = new StreamReader(ruta))
+                        {
+                            txtRead.Invoke((MethodInvoker)delegate
+                            {
+                                txtRead.Text = reader.ReadToEnd();
+                            });
+                        }
+                        break;
+                    }
+                    catch (IOException)
+                    {
+                        Thread.Sleep(50); // espera 50ms y reintent
+                    }
+                }
             }
             else
             {
                 MessageBox.Show("Seleccione un usuario");
             }
         }
+
     }
 }
