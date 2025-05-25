@@ -69,6 +69,7 @@
             chatButt = new Button();
             SingOutButt = new Button();
             consultBox = new ComboBox();
+            txtlblmes = new Label();
             Panel.SuspendLayout();
             panel2.SuspendLayout();
             panelInv.SuspendLayout();
@@ -502,11 +503,22 @@
             consultBox.Size = new Size(200, 33);
             consultBox.TabIndex = 16;
             // 
+            // txtlblmes
+            // 
+            txtlblmes.AutoSize = true;
+            txtlblmes.BackColor = Color.Transparent;
+            txtlblmes.Location = new Point(358, 101);
+            txtlblmes.Name = "txtlblmes";
+            txtlblmes.Size = new Size(0, 25);
+            txtlblmes.TabIndex = 17;
+            txtlblmes.Visible = false;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(801, 456);
+            Controls.Add(txtlblmes);
             Controls.Add(panelInv);
             Controls.Add(consultBox);
             Controls.Add(chatButt);
@@ -582,5 +594,6 @@
         private Button chatButt;
         private Button SingOutButt;
         private ComboBox consultBox;
+        private Label txtlblmes;
     }
 }

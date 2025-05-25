@@ -21,10 +21,13 @@ namespace ClienteProyecto
         Thread atender;
         CancellationTokenSource cts;
         public bool sesion;
+        public bool conec;
         public string nickCons;
         public string nickUsu;
+        public string txtmensaje;
         public int pos;
         public List<string> jugadoresConectados = new List<string>();
+        public Label[] playerslab;
         List<Form2> formularios = new List<Form2>();
         public bool cargado;
 
@@ -32,8 +35,11 @@ namespace ClienteProyecto
         {
             InitializeComponent();
             sesion = false;
+            conec = false;
+            txtmensaje = "";
             List<string> Info = new List<string>() {"Información Usuario","Historial de Partidas"};
             consultBox.DataSource = Info;
+            playerslab = new Label[] { player1, player2, player3, player4 };
         }
         private void AtenderServidor(CancellationToken token)
         {
@@ -44,7 +50,6 @@ namespace ClienteProyecto
                     //Recibimos mensaje del servidor
                     byte[] msg2 = new byte[80];
                     server.Receive(msg2);
-                    // Dividimos el texto en fragmentos dentro de un vector para poder extraer el número del código.
                     string[] trozos = Encoding.ASCII.GetString(msg2).Split('/');
                     int codigo = Convert.ToInt32(trozos[0]);
                     string mensaje = trozos[1].Split('\0')[0];
@@ -59,23 +64,42 @@ namespace ClienteProyecto
                                 panel1.BackColor = Color.Red;
                                 Desconn.Visible = false;
                                 Conn.Visible = true;
+                                conec = false;
+                                int j = 4;
+                                for (int i = 0; i < j; i++)
+                                {
+                                    playerslab[i].Text = null;
+                                }
                             });
                             break;
                         case 1:  // Respuesta de la función de register.
                             if (mensaje == "1")
                             {
                                 // Cuando el servidor devuelve un 1 para indicar que el registro se completa sin ningún error.
-                                MessageBox.Show("Registro completado.");
+                               
+                                txtmensaje = "Registro completado.";
+                                mostrarmens(txtmensaje, "Green");
                             }
                             else if (mensaje == "2")
                             {
                                 // Cuando el servidor devuelve un 2 para indicar que el nickname proporcionado ya está en uso.
-                                MessageBox.Show("Nickname ya usado.");
+                                
+                                txtmensaje = "Nickname ya usado.";
+                                mostrarmens(txtmensaje, "Red");
                             }
                             else
                             {
                                 // Cualquier otro error ocurrido en el servidor.
-                                MessageBox.Show("Error al registrarse.");
+                                txtmensaje = "Error al registrarse.";
+                                mostrarmens(txtmensaje, "Red");
+                            }
+                            if ((mensaje == "2") || (mensaje == "3"))
+                            {
+                                this.Invoke((MethodInvoker)delegate
+                                {
+                                    nicktxtpanel.Clear();
+                                    passtxtpanel.Clear();
+                                });
                             }
                             break;
                         case 2:      //Respuesta función Log In.
@@ -86,7 +110,6 @@ namespace ClienteProyecto
 
                                 this.Invoke((MethodInvoker)delegate
                                 {
-                                    nickUsu = nicktxtpanel.Text;
                                     // Vacía el texto introducido anteriormente y oculta el panel.
                                     nicktxtpanel.Text = null;
                                     passtxtpanel.Text = null;
@@ -98,24 +121,45 @@ namespace ClienteProyecto
                                     sesion = true;
                                     Nickname_player.Text = nickUsu;
                                 });
-                                MessageBox.Show("Sesión iniciada.");
+                                txtmensaje = "Sesión iniciada.";
+                                mostrarmens(txtmensaje, "Green");
                             }
                             else if (mensaje == "2")
                             {
                                 // Cuando el servidor devuelve un 2 para indicar que el nickname no se encuentra en la base de datos.
-                                MessageBox.Show("Nickname incorrecto.");
+                               
+                                txtmensaje = "Nickname incorrecto.";
+                                mostrarmens(txtmensaje, "Red");
+                            }
+                            else if (mensaje == "3")
+                            {
+                                // Cuando el servidor devuelve un 3 para indicar que la contraseña proporcionada para ese usuario no es correcta.
+                                
+                                txtmensaje = "Password incorrecto.";
+                                mostrarmens(txtmensaje, "Red");
                             }
                             else
                             {
-                                // Cuando el servidor devuelve un 3 para indicar que la contraseña proporcionada para ese usuario no es correcta.
-                                MessageBox.Show("Password incorrecto.");
+                                txtmensaje = "Usuario Conectado.";
+                                mostrarmens(txtmensaje, "Red");
+                            }
+                            if ((mensaje == "2") || (mensaje == "3") || (mensaje == "4"))
+                            {
+                                this.Invoke((MethodInvoker)delegate
+                                {
+                                    nickUsu = null;
+                                    nicktxtpanel.Clear();
+                                    passtxtpanel.Clear();
+                                });
                             }
                             break;
                         case 3:  //Respuesta función Consulta
                             if (mensaje == "N")
                             {
                                 // Cuando el servidor devuelve una "N" para indicar que el nickname no se ha encontrado en la base de datos.
-                                MessageBox.Show("Nombre no econtrado en la base de datos.");
+                                
+                                txtmensaje = "Nombre no econtrado en la base de datos.";
+                                mostrarmens(txtmensaje, "Red");
                             }
                             else
                             {
@@ -135,8 +179,7 @@ namespace ClienteProyecto
                             {
                                 // Cuando el servidor devuelve una "N" para indicar que no hay ningún usuario conectado.
                                 // Vacía el texto de todos los labels.
-                                int j = 4;
-                                Label[] playerslab = new Label[] { player1, player2, player3, player4 };
+                                int j = 4;                                
                                 this.Invoke((MethodInvoker)delegate
                                 {
                                     for (int i = 0; i < j; i++)
@@ -154,7 +197,6 @@ namespace ClienteProyecto
                                 // Rellena el texto de todos los labels con los nicknames recibidos.
                                 string[] partes2 = string.Join("/", trozos.Skip(2)).Split('\0')[0].Split('/');
                                 int j = Convert.ToInt32(trozos[1]);
-                                Label[] playerslab = new Label[] { player1, player2, player3, player4 };
                                 jugadoresConectados.Clear();
 
                                 this.Invoke((MethodInvoker)delegate
@@ -292,6 +334,7 @@ namespace ClienteProyecto
                 cts = new CancellationTokenSource();
                 atender = new Thread(() => AtenderServidor(cts.Token));
                 atender.Start();
+                conec = true;
 
             }
             catch (SocketException ex)
@@ -303,11 +346,15 @@ namespace ClienteProyecto
         }
         private void Desconn_Click(object sender, EventArgs e)
         {
-            //Mensaje de desconexión
+            if(sesion)
+            {
+                LogOut_Click(null, null);
+            }
+            // Mensaje de desconexión
             string mensaje = "0/";
 
             byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
-            server.Send(msg);
+            server.Send(msg);   
         }
 
         private void Log_Click(object sender, EventArgs e)
@@ -334,7 +381,9 @@ namespace ClienteProyecto
             if (string.IsNullOrEmpty(nickConsBox.Text))
             {
                 // Comprueba que haya datos en los campos de texto.
-                MessageBox.Show("Datos no proporcionados");
+                txtmensaje = "Proporciona el nombre del usuario";
+                mostrarmens(txtmensaje, "Red");
+
             }
             else
             {
@@ -362,7 +411,8 @@ namespace ClienteProyecto
                 else
                 {
                     // Muestra un mensaje en caso de que no tengas la sesión iniciada.
-                    MessageBox.Show("Sesión no iniciada.");
+                    txtmensaje = "Sesión no iniciada.";
+                    mostrarmens(txtmensaje, "Red");
                 }
             }
         }
@@ -372,7 +422,7 @@ namespace ClienteProyecto
             //Terminar el programa ejecutado.
             this.Close();
         }
-        private void LogOut_Click(object sender, EventArgs e)
+        public void LogOut_Click(object sender, EventArgs e)
         {
             // Función que se ejecuta al presionar el botón "Log Out".
             // Sirve para cerrar la sesión actual.
@@ -392,6 +442,8 @@ namespace ClienteProyecto
         private void CancelPanel_Click(object sender, EventArgs e)
         {
             // Oculta el panel al presionar el botón de cancelar.
+            nicktxtpanel.Clear();
+            passtxtpanel.Clear();
             Panel.Visible = false;
         }
 
@@ -402,18 +454,26 @@ namespace ClienteProyecto
             if (string.IsNullOrEmpty(nicktxtpanel.Text) || string.IsNullOrEmpty(passtxtpanel.Text))
             {
                 // Comprueba que haya datos en los campos de texto.
-                MessageBox.Show("Datos no proporcionados.");
+                txtmensaje = "Datos no proporcionados.";
+                mostrarmens(txtmensaje, "Red");
             }
-            else
+            else if (conec == true)
             {
                 string mensaje = "1/" + nicktxtpanel.Text + "/" + passtxtpanel.Text;
                 // Enviamos al servidor el nombre tecleado
                 byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
                 server.Send(msg);
                 // Vacía el texto introducido anteriormente y oculta el panel.
-                nicktxtpanel.Text = null;
-                passtxtpanel.Text = null;
+                nicktxtpanel.Clear();
+                passtxtpanel.Clear();
                 Panel.Visible = false;
+            }
+            else
+            {
+                txtmensaje = "No estas conectado";
+                mostrarmens(txtmensaje, "Red");
+                nicktxtpanel.Clear();
+                passtxtpanel.Clear();
             }
         }
 
@@ -424,14 +484,23 @@ namespace ClienteProyecto
             if (string.IsNullOrEmpty(nicktxtpanel.Text) || string.IsNullOrEmpty(passtxtpanel.Text))
             {
                 // Comprueba que haya datos en los campos de texto.
-                MessageBox.Show("Datos no proporcionados.");
+                txtmensaje = "Datos no proporcionados.";
+                mostrarmens(txtmensaje, "Red");
             }
-            else
+            else if (conec == true)
             {
+                nickUsu = nicktxtpanel.Text;
                 string mensaje = "2/" + nicktxtpanel.Text + "/" + passtxtpanel.Text;
                 // Enviamos al servidor el nombre tecleado y la contraseña
                 byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
                 server.Send(msg);
+            }
+            else
+            {
+                txtmensaje = "No estas conectado";
+                mostrarmens(txtmensaje, "Red");
+                nicktxtpanel.Clear();
+                passtxtpanel.Clear();
             }
         }
 
@@ -453,7 +522,7 @@ namespace ClienteProyecto
 
         private void sendInvbut_Click(object sender, EventArgs e)
         {
-            if (comboBoxJugadores.SelectedItem != null)
+            if ((comboBoxJugadores.SelectedItem != null) && (conec == true))
             {
                 string jugadorSeleccionado = comboBoxJugadores.SelectedItem.ToString();
 
@@ -462,12 +531,19 @@ namespace ClienteProyecto
                 byte[] msg = Encoding.ASCII.GetBytes(mensaje);
                 server.Send(msg);
 
-                MessageBox.Show("Invitacion enviada a " + jugadorSeleccionado);
+                txtmensaje = "Invitacion enviada a " + jugadorSeleccionado;
+                mostrarmens(txtmensaje, "Red");
                 panelInv.Visible = false;
+            }
+            else if (conec == true)
+            {
+                txtmensaje = "Selecciona un jugador para invitar.";
+                mostrarmens(txtmensaje, "Red");
             }
             else
             {
-                MessageBox.Show("Selecciona un jugador para invitar.");
+                txtmensaje = "No estas conectado";
+                mostrarmens(txtmensaje, "Red");
             }
         }
 
@@ -553,20 +629,22 @@ namespace ClienteProyecto
             {
                 writer.WriteLine(menstxt);
             }
-            bool cargadoExitosamente = false;
-            for (int intento = 0; intento < 5 && !cargadoExitosamente; intento++)
+            if (formularios.Count != 0)
             {
-                try
+                bool cargadoExitosamente = false;
+                for (int intento = 0; intento < 5 && !cargadoExitosamente; intento++)
                 {
-                    formularios[0].LoadMens(usuario, usu);
-                    cargadoExitosamente = true;
-                }
-                catch (IOException)
-                {
-                    Thread.Sleep(50); // esperar antes de reintentar
+                    try
+                    {
+                        formularios[0].LoadMens(usuario, usu);
+                        cargadoExitosamente = true;
+                    }
+                    catch (IOException)
+                    {
+                        Thread.Sleep(50);
+                    }
                 }
             }
-
         }
         public void respMens2(string mensaje, string usu, string usuario)
         {
@@ -620,5 +698,50 @@ namespace ClienteProyecto
             }
             return nombre;
         }
+        public void mostrarmens(string tmensaje, string color)
+        {
+            this.Invoke((MethodInvoker)delegate
+            {
+                txtlblmes.Text = tmensaje;
+                txtlblmes.BackColor = Color.FromName(color);
+                txtlblmes.ForeColor = Color.White;
+                txtlblmes.Visible = true;
+
+                int alpha = 255;
+                Color fondoInicial = txtlblmes.BackColor;
+                Color textoInicial = txtlblmes.ForeColor;
+
+                // Espera 1 segundo antes de empezar el fade
+                System.Windows.Forms.Timer delay = new System.Windows.Forms.Timer();
+                delay.Interval = 1000;
+                delay.Tick += (s1, e1) =>
+                {
+                    delay.Stop();
+                    delay.Dispose();
+
+                    System.Windows.Forms.Timer fadeTimer = new System.Windows.Forms.Timer();
+                    fadeTimer.Interval = 50;
+                    fadeTimer.Tick += (s2, e2) =>
+                    {
+                        alpha -= 15;
+
+                        if (alpha <= 0)
+                        {
+                            txtlblmes.Visible = false;
+                            fadeTimer.Stop();
+                            fadeTimer.Dispose();
+                        }
+                        else
+                        {
+                            txtlblmes.BackColor = Color.FromArgb(alpha, fondoInicial.R, fondoInicial.G, fondoInicial.B);
+                            txtlblmes.ForeColor = Color.FromArgb(alpha, textoInicial.R, textoInicial.G, textoInicial.B);
+                        }
+                    };
+                    fadeTimer.Start();
+                };
+                delay.Start();
+            });
+        }
+
     }
 }

@@ -34,6 +34,7 @@
             comboUsuChat = new ComboBox();
             CancelPanel = new Button();
             swButt = new Button();
+            txtlblmes = new Label();
             SuspendLayout();
             // 
             // txtRead
@@ -94,11 +95,21 @@
             swButt.UseVisualStyleBackColor = true;
             swButt.Click += swButt_Click;
             // 
+            // txtlblmes
+            // 
+            txtlblmes.AutoSize = true;
+            txtlblmes.Location = new Point(325, 79);
+            txtlblmes.Name = "txtlblmes";
+            txtlblmes.Size = new Size(0, 25);
+            txtlblmes.TabIndex = 7;
+            txtlblmes.Visible = false;
+            // 
             // Form2
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 420);
+            Controls.Add(txtlblmes);
             Controls.Add(swButt);
             Controls.Add(CancelPanel);
             Controls.Add(comboUsuChat);
@@ -119,5 +130,6 @@
         private ComboBox comboUsuChat;
         private Button CancelPanel;
         private Button swButt;
+        private Label txtlblmes;
     }
 }

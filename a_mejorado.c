@@ -160,7 +160,7 @@ void *AtenderCliente(void *socket) {
 			// Codigo 0: solicitud de desconexion
 			strcpy(respuesta, "0/OK");
 			write(sock_conn, respuesta, strlen(respuesta)); // Enviar confirmación
-			terminar = 1;
+			terminar = 1;			
 		} 
 		else if (codigo == 1) 
 		{
@@ -188,11 +188,24 @@ void *AtenderCliente(void *socket) {
 			p = strtok(NULL, "/");
 			strcpy(nick, p);
 			Consulta(respt, nick, codigo);
+			int coninc = 0;
+			for(int i = 0; i < milista.num;i++)
+			{
+				if(strcmp(milista.conectados[i].nombre,nick) == 0)
+				{
+					coninc = 1;
+					break;
+				}
+			}
 			if (respt == NULL || respt[0] == '\0') 
 			{
 				strcpy(respuesta, "2/2"); // Usuario no encontrado
 			} 
-			else 
+			else if (coninc != 0)
+			{
+				strcpy(respuesta, "2/4");
+			}
+			else
 			{
 				p = strtok(NULL, "/");
 				strcpy(pass, p);
@@ -206,6 +219,7 @@ void *AtenderCliente(void *socket) {
 					strcpy(respuesta, "2/3"); // Contrasena incorrecta
 				}
 			}
+			
 			printf("--------Respuesta---------\n Respuesta - %s\n-------------------\n", respuesta);
 			write(sock_conn, respuesta, strlen(respuesta));
 		} 
@@ -368,7 +382,7 @@ void *AtenderCliente(void *socket) {
 				sprintf(notificacion, "%s", conectados); // Notificacion con lista de usuarios
 			}
 			
-			for (int j = 0; j < i; j++) 
+			for (int j = 0; j < milista.num; j++) 
 			{
 				printf("---------Notificacion------------\n Notificacion - %s\n-------------------\n", notificacion);
 				write(sockets[j], notificacion, strlen(notificacion));
