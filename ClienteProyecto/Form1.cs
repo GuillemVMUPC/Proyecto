@@ -12,6 +12,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Diagnostics.Eventing.Reader;
 using System.Threading;
 using System.Security.Cryptography.Pkcs;
+using static System.Windows.Forms.DataFormats;
 
 namespace ClienteProyecto
 {
@@ -25,10 +26,15 @@ namespace ClienteProyecto
         public string nickCons;
         public string nickUsu;
         public string txtmensaje;
+        public string host;
+        public string guest;
+        public string turno;
         public int pos;
+        public int posgame;
         public List<string> jugadoresConectados = new List<string>();
         public Label[] playerslab;
         List<Form2> formularios = new List<Form2>();
+        List<Form3> formulario = new List<Form3>();
         public bool cargado;
 
         public Form1()
@@ -53,6 +59,7 @@ namespace ClienteProyecto
                     string[] trozos = Encoding.ASCII.GetString(msg2).Split('/');
                     int codigo = Convert.ToInt32(trozos[0]);
                     string mensaje = trozos[1].Split('\0')[0];
+                    int nForm;
                     switch (codigo)
                     {
                         case 0:
@@ -161,10 +168,10 @@ namespace ClienteProyecto
                                 txtmensaje = "Nombre no econtrado en la base de datos.";
                                 mostrarmens(txtmensaje, "Red");
                             }
-                            else
+                            else if (Convert.ToInt32(trozos[1].Split('\0')[0]) == 1)
                             {
                                 // Cuando el servidor devuelve algo distinto de una "N", proporcionando los datos del usuario solicitado.
-                                string[] partes1 = trozos.Skip(1).ToArray();
+                                string[] partes1 = trozos.Skip(2).ToArray();
 
                                 // Mostrar el mensaje en un MessageBox
                                 MessageBox.Show("Datos de " + nickCons + "\n" + "ID: " + partes1[0] + "\n" + "Nickname: " + partes1[1] + "\n" + "Total Score: " + partes1[2]);
@@ -173,7 +180,18 @@ namespace ClienteProyecto
                                     nickCons = null;
                                 });
                             }
-                            break;
+                            else
+                            {
+                                string[] partes1 = trozos.Skip(2).ToArray();
+
+                                // Mostrar el mensaje en un MessageBox
+                                MessageBox.Show("Datos de " + nickCons + "\n" + "Game: " + partes1[0] + "\n" + "Host: " + partes1[1] + "\n" + "Guest: " + partes1[2] + "\n" + "Host Score: " + partes1[3] + "\n" + "Guest Score: " + partes1[4] + "\n" + "Winner: " + partes1[5]);
+                                this.Invoke((MethodInvoker)delegate
+                                {
+                                    nickCons = null;
+                                });
+                            }
+                                break;
                         case 4:  //Notificación
                             if (mensaje == "N")
                             {
@@ -195,19 +213,18 @@ namespace ClienteProyecto
                             {
                                 // Cuando el servidor devuelve algo distinto de "N", indicando que hay usuarios conectados.
                                 // Rellena el texto de todos los labels con los nicknames recibidos.
-                                string[] partes2 = string.Join("/", trozos.Skip(2)).Split('\0')[0].Split('/');
                                 int j = Convert.ToInt32(trozos[1]);
                                 jugadoresConectados.Clear();
 
                                 this.Invoke((MethodInvoker)delegate
                                 {
                                     int labelIndex = 0;
-                                    for (int i = 0; i < partes2.Length; i++)
+                                    for (int i = 0; i < j; i++)
                                     {
-                                        if (partes2[i] != nickUsu)
+                                        if (trozos[i + 2] != nickUsu)
                                         {
-                                            playerslab[labelIndex].Text = partes2[i];
-                                            jugadoresConectados.Add(partes2[i]);
+                                            playerslab[labelIndex].Text = trozos[i + 2];
+                                            jugadoresConectados.Add(trozos[i + 2]);
                                             labelIndex++;
                                         }
                                     }
@@ -225,18 +242,26 @@ namespace ClienteProyecto
                             }
                             break;
                         case 5:
-                            string[] partes = trozos.Skip(1).ToArray();
-                            this.Invoke((MethodInvoker)delegate
+                            if (Convert.ToInt32(trozos[1].Split('\0')[0]) == 1)
                             {
-                                panelInv.Visible = true;
-                                cancelInv.Visible = false;
-                                rejectButton.Visible = true;
-                                acceptButton.Visible = true;
-                                sendInvbut.Visible = false;
-                                nameInv.Text = "Invitacion de " + partes[0];
-                                pos = Convert.ToInt32(partes[1]);
-                            });
-                            break;
+                                string[] partes = trozos.Skip(2).ToArray();
+                                this.Invoke((MethodInvoker)delegate
+                                {
+                                    panelInv.Visible = true;
+                                    cancelInv.Visible = false;
+                                    rejectButton.Visible = true;
+                                    acceptButton.Visible = true;
+                                    sendInvbut.Visible = false;
+                                    nameInv.Text = "Invitacion de " + partes[0];
+                                    pos = Convert.ToInt32(partes[1]);
+
+                                });
+                            }
+                            else
+                            {
+                                pos = Convert.ToInt32(trozos[2].Split('\0')[0]);
+                            }
+                                break;
                         case 6:
                             if (mensaje == "1")
                             {
@@ -252,7 +277,6 @@ namespace ClienteProyecto
                                 this.Invoke((MethodInvoker)delegate
                                 {
                                     gameCancel.Visible = true;
-                                    startBut.Visible = true;
                                     game.Visible = true;
                                     player1.Visible = false;
                                     player2.Visible = false;
@@ -261,6 +285,12 @@ namespace ClienteProyecto
                                     label4.Visible = false;
                                     Host.Text = trozos[2];
                                     Guest.Text = trozos[3];
+                                    host = trozos[2];
+                                    guest = trozos[3];
+                                    if(host == nickUsu)
+                                    {
+                                        startBut.Visible = true;
+                                    }
                                 });
                             }
                             else
@@ -301,6 +331,53 @@ namespace ClienteProyecto
                                 });
                             }
                             break;
+                        case 10:
+                            this.Invoke((MethodInvoker)delegate
+                            {
+                                posgame = Convert.ToInt32(trozos[1].Split('\0')[0]);
+                                turno = trozos[2].Split('\0')[0];
+                                CancellationTokenSource cts3 = new CancellationTokenSource();
+                                Thread newForm2 = new Thread(() => NuevoForm2(cts3.Token));
+                                newForm2.Start();
+                                Host.Text = null;
+                                Guest.Text = null;
+                                game.Visible = false;
+                                gameCancel.Visible = false;
+                                startBut.Visible = false;
+                                label4.Visible = true;
+                                player1.Visible = true;
+                                player2.Visible = true;
+                                player3.Visible = true;
+                                player4.Visible = true;
+                                host = null;
+                                guest = null;
+                            });
+                            break;
+                        case 11:
+                            nForm = Convert.ToInt32(trozos[4].Split('\0')[0]);
+                            int valor = Convert.ToInt32(trozos[1].Split('\0')[0]);
+                            string palo = trozos[2].Split('\0')[0];
+                            formulario[nForm].respRobar(valor, palo);
+                            formulario[nForm].whoturno(trozos[3].Split('\0')[0]);
+                            break;
+                        case 12:
+                            nForm = Convert.ToInt32(trozos[2].Split('\0')[0]);
+                            formulario[nForm].whoturno(trozos[1].Split('\0')[0]);
+                            break;
+                        case 13:
+                            nForm = Convert.ToInt32(trozos[5].Split('\0')[0]);
+                            int valor1 = Convert.ToInt32(trozos[1].Split('\0')[0]);
+                            string palo1 = trozos[2].Split('\0')[0];
+                            int valor2 = Convert.ToInt32(trozos[3].Split('\0')[0]);
+                            string palo2 = trozos[4].Split('\0')[0];
+                            formulario[nForm].cartCrup(valor1,palo1,valor2,palo2);
+                            break;
+                        case 14:
+                            nForm = Convert.ToInt32(trozos[3].Split('\0')[0]);
+                            int valor3 = Convert.ToInt32(trozos[1].Split('\0')[0]);
+                            string palo3 = trozos[2].Split('\0')[0];
+                            formulario[nForm].robarCrup(valor3,palo3);
+                            break;
                     }
                 }
                 catch (SocketException ex)
@@ -315,7 +392,7 @@ namespace ClienteProyecto
             //Creamos un IPEndPoint con el ip del servidor y puerto del servidor 
             //al que deseamos conectarnos
             IPAddress direc = IPAddress.Parse("192.168.56.101");
-            IPEndPoint ipep = new IPEndPoint(direc, 9080);
+            IPEndPoint ipep = new IPEndPoint(direc, 9010);
 
 
             //Creamos el socket 
@@ -581,7 +658,16 @@ namespace ClienteProyecto
 
         private void startBut_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("No hay funcion");
+            string mensaje = "11/" + pos;
+            byte[] msg = Encoding.ASCII.GetBytes(mensaje);
+            server.Send(msg);
+        }
+        public void NuevoForm2(CancellationToken token)
+        {
+            int cont = formulario.Count;
+            Form3 f = new Form3(cont,server, host, guest, nickUsu, posgame,turno);
+            formulario.Add(f);
+            f.ShowDialog();
         }
 
         private void SingOutButt_Click(object sender, EventArgs e)
@@ -742,6 +828,5 @@ namespace ClienteProyecto
                 delay.Start();
             });
         }
-
     }
 }

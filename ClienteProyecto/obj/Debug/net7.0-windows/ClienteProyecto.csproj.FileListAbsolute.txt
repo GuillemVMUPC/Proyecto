@@ -36,3 +36,4 @@ C:\share\Proyecto\Proyecto\ClienteProyecto\obj\Debug\net7.0-windows\ClienteProye
 C:\share\Proyecto\Proyecto\ClienteProyecto\obj\Debug\net7.0-windows\ref\ClienteProyecto.dll
 C:\share\Proyecto\Proyecto\ClienteProyecto\obj\Debug\net7.0-windows\ClienteProyecto.Properties.Resources.resources
 C:\share\Proyecto\Proyecto\ClienteProyecto\obj\Debug\net7.0-windows\ClienteProyecto.Form2.resources
+C:\share\Proyecto\Proyecto\ClienteProyecto\obj\Debug\net7.0-windows\ClienteProyecto.Form3.resources

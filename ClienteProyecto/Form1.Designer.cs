@@ -390,7 +390,7 @@
             panelInv.Controls.Add(acceptButton);
             panelInv.Controls.Add(rejectButton);
             panelInv.Controls.Add(nameInv);
-            panelInv.Location = new Point(342, 157);
+            panelInv.Location = new Point(323, 168);
             panelInv.Name = "panelInv";
             panelInv.Size = new Size(286, 175);
             panelInv.TabIndex = 12;

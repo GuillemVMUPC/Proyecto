@@ -8,7 +8,9 @@
 #include <ctype.h>
 #include <mysql.h>
 #include <pthread.h>
+#include <time.h>
 
+#define NUM_CARTAS 40
 // Estructura que representa a un usuario conectado al servidor
 typedef struct{
 	char nombre[20];       // Nombre del usuario
@@ -34,6 +36,29 @@ typedef struct{
 	int num;         // Numero total de juegos en lista
 } GameList;
 
+typedef struct {
+	int numero;       // Ejemplo: 1, 2, …, 7, 10, 11, 12
+	char palo[10];    // "oros", "copas", "espadas", "bastos"
+} Carta;
+
+typedef struct {
+	Carta cartas[NUM_CARTAS];
+	char Host[25];   // Nombre del usuario que envia la invitacion
+	int posHost;
+	char Guest[25];  // Nombre del usuario que recibe la invitacion
+	int posGuest;
+	int carta_actual; 
+	int totalCrup;
+	int indexCrup;
+	int rest;
+	int a;
+} Baraja;
+
+typedef struct {
+	Baraja barajas[10];
+	int num;
+}ListaBarajas;
+	
 // Mutex para controlar el acceso concurrente a recursos compartidos
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -43,7 +68,45 @@ int i;
 int sockets[100];           // Array de sockets para clientes
 ListaConectados milista;    // Lista de usuarios conectados
 GameList mylist;            // Lista de juegos en fase de invitacion
+ListaBarajas milistas;
 
+int crearBarajaNueva() 
+{
+	const char* palos[] = { "oros", "copas", "espadas", "bastos" };
+	int numeros[] = { 1, 2, 3, 4, 5, 6, 7, 10, 11, 12 };
+	int pos = 0;
+	
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 10; j++) {
+			milistas.barajas[milistas.num].cartas[pos].numero = numeros[j];
+			strcpy(milistas.barajas[milistas.num].cartas[pos].palo, palos[i]);
+			pos++;
+		}
+	}
+	milistas.barajas[milistas.num].carta_actual = 0;
+	return milistas.num;
+}
+
+
+void mezclarUltimaBaraja() 
+{
+	Baraja *baraja = &milistas.barajas[milistas.num];
+	srand(time(NULL));  // Semilla aleatoria
+	
+	for (int i = NUM_CARTAS - 1; i > 0; i--) {
+		int j = rand() % (i + 1);
+		Carta temp = baraja->cartas[i];
+		baraja->cartas[i] = baraja->cartas[j];
+		baraja->cartas[j] = temp;
+	}
+	
+	printf("Baraja mezclada correctamente.\n");
+}
+
+int obtenerNumeroAleatorio() 
+{
+	return (rand() % 2) + 1;
+}
 // Funcion que construye un mensaje con la lista de usuarios conectados
 void GiveConnected(char conectados[300]) {
 	sprintf(conectados, "4/%d", milista.num);
@@ -52,6 +115,7 @@ void GiveConnected(char conectados[300]) {
 		strcat(conectados, "/");
 		strcat(conectados, milista.conectados[i].nombre);
 	}
+	strcat(conectados, "/");
 }
 
 // Funcion que elimina un usuario de la lista de conectados
@@ -271,12 +335,15 @@ void *AtenderCliente(void *socket) {
 				if (mylist.Games[c].Sent == 0) 
 				{
 					int pos = GivePos(mylist.Games[c].Guest);
+					int pos2 = GivePos(mylist.Games[c].Host);
 					if (pos != -1) 
 					{
-						sprintf(invitacion, "5/%s/%d", mylist.Games[c].Host, c); // Formato: 5/nickname_host/posicion
+						sprintf(invitacion, "5/1/%s/%d/", mylist.Games[c].Host, c); // Formato: 5/nickname_host/posicion
 						printf("--------Invitacion------------\n Invitacion - %d\n-----------------------\n", invitacion[c]);
 						mylist.Games[c].Sent = 1; // Marcamos como enviada
 						write(milista.conectados[pos].socket, invitacion, strlen(invitacion));
+						sprintf(invitacion, "5/2/%d/", c);
+						write(milista.conectados[pos2].socket, invitacion, strlen(invitacion));
 					}
 				}
 			}
@@ -290,7 +357,7 @@ void *AtenderCliente(void *socket) {
 			int pos = GivePos(mylist.Games[poslis].Host);
 			if (pos != -1) 
 			{
-				sprintf(respInv, "6/1"); // Invitacion aceptada
+				sprintf(respInv, "6/1/"); // Invitacion aceptada
 				printf("--------Respuesta Invitacion------------\n Respuesta Invitacion - %s\n------------------------\n", respInv);
 				write(milista.conectados[pos].socket, respInv, strlen(respInv));
 			}
@@ -304,7 +371,7 @@ void *AtenderCliente(void *socket) {
 			int pos = GivePos(mylist.Games[poslis].Host);
 			if (pos != -1) 
 			{
-				sprintf(respInv, "6/2"); // Invitacion rechazada
+				sprintf(respInv, "6/2/"); // Invitacion rechazada
 				printf("--------Respuesta Invitacion------------\n Respuesta Invitacion - %s\n------------------------\n", respInv);
 				write(milista.conectados[pos].socket, respInv, strlen(respInv));
 			}
@@ -318,7 +385,7 @@ void *AtenderCliente(void *socket) {
 			int pos2 = GivePos(mylist.Games[g].Guest);
 			if (pos != -1 && pos2 != -1) 
 			{
-				sprintf(confInv, "7/1/%s/%s", mylist.Games[g].Host, mylist.Games[g].Guest);
+				sprintf(confInv, "7/1/%s/%s/", mylist.Games[g].Host, mylist.Games[g].Guest);
 				// Formato: 7/1/host/guest - confirmacion de inicio de partida
 				printf("--------Confirmacion Invitacion------------\n Respuesta Invitacion - %s\n------------------------\n", confInv);
 				write(milista.conectados[pos].socket, confInv, strlen(confInv));
@@ -331,7 +398,7 @@ void *AtenderCliente(void *socket) {
 			strcpy(nick, p);
 			printf("-------------- Funcion Sign Out ---------------\n Nickname - %s:\n--------------------------\n", nick);
 			Delete(nick);
-			strcpy(respuesta, "8/1");
+			strcpy(respuesta, "8/1/");
 			printf("--------Respuesta---------\n Respuesta - %s\n-------------------\n", respuesta);
 			write(sock_conn, respuesta, strlen(respuesta));			
 		}
@@ -346,15 +413,150 @@ void *AtenderCliente(void *socket) {
 			{
 				p = strtok(NULL, "/");
 				strcpy(mensaje,p);
-				sprintf(chats, "9/%s/%s/%s", mensaje, nick2, nick);
+				sprintf(chats, "9/%s/%s/%s/", mensaje, nick2, nick);
 				printf("-------------- Funcion Chat ---------------\n Mensaje - %s:\n--------------------------\n", mensaje);
 				write(milista.conectados[pos].socket, chats, strlen(chats));
 			}
 			else
 			{
-				sprintf(chats, "9/%s/%s/%s/%s", "Error", nick2, nick, mensaje);
+				sprintf(chats, "9/%s/%s/%s/%s/", "Error", nick2, nick, mensaje);
 				printf("-------------- Funcion Chat Error ---------------\n Mensaje - %s:\n--------------------------\n", mensaje);
 				write(sock_conn, chats, strlen(chats));
+			}
+		}
+		else if (codigo == 11)
+		{
+			p = strtok(NULL, "/");
+			int g = atoi(p);
+			int pos = GivePos(mylist.Games[g].Host);
+			int pos2 = GivePos(mylist.Games[g].Guest);
+			int pos3 = crearBarajaNueva();
+			strcpy(milistas.barajas[milistas.num].Host,mylist.Games[g].Host);
+			printf("%s",milistas.barajas[milistas.num].Host);
+			milistas.barajas[milistas.num].posHost = pos;
+			strcpy(milistas.barajas[milistas.num].Guest,mylist.Games[g].Guest);
+			printf("%s",milistas.barajas[milistas.num].Guest);
+			milistas.barajas[milistas.num].posGuest = pos2;
+			milistas.barajas[milistas.num].rest = 0;
+			mezclarUltimaBaraja();
+			milistas.num++;
+			int valor = obtenerNumeroAleatorio();
+			char turno[20];
+			if(valor == 1)
+			{
+				strcpy(turno,mylist.Games[g].Host);
+			}
+			else
+			{
+				strcpy(turno,mylist.Games[g].Guest);
+			}
+			if (pos != -1 && pos2 != -1) 
+			{
+				sprintf(mensaje, "10/%d/%s/", pos3,turno);
+				// Formato: 7/1/host/guest - confirmacion de inicio de partida
+				printf("--------Confirmacion Invitacion------------\n Respuesta Invitacion - %s\n------------------------\n", mensaje);
+				write(milista.conectados[pos].socket, mensaje, strlen(mensaje));
+				write(milista.conectados[pos2].socket, mensaje, strlen(mensaje));
+			}
+		}
+		
+		else if (codigo == 12)
+		{
+
+			p = strtok(NULL, "/");
+			int g = atoi(p);
+			Carta carta = milistas.barajas[g].cartas[milistas.barajas[g].carta_actual];
+			milistas.barajas[g].carta_actual++;  // Marcar como usada
+			char turno[20];
+			p = strtok(NULL, "/");
+			strcpy(nick,p);
+			p = strtok(NULL, "/");
+			int n = atoi(p);
+			if((strcmp(milistas.barajas[g].Host,nick) == 0) && milistas.barajas[g].rest == 0)
+			{
+				strcpy(turno, milistas.barajas[g].Guest);
+				sprintf(mensaje, "12/%s/%d/", turno,n);
+				write(milista.conectados[milistas.barajas[g].posGuest].socket, mensaje, strlen(mensaje));
+			}
+			else if((strcmp(milistas.barajas[g].Guest,nick) == 0) && milistas.barajas[g].rest == 0)
+			{
+				strcpy(turno, milistas.barajas[g].Host);
+				sprintf(mensaje, "12/%s/%d/", turno,n);
+				write(milista.conectados[milistas.barajas[g].posHost].socket, mensaje, strlen(mensaje));
+			}
+			sprintf(mensaje, "11/%d/%s/%s/%d/", carta.numero, carta.palo,turno,n);
+			write(sock_conn, mensaje, strlen(mensaje));
+			
+		}
+		else if (codigo == 13)
+		{
+			p = strtok(NULL, "/");
+			int g = atoi(p);
+			p = strtok(NULL, "/");
+			int n = atoi(p);
+			char turno[20];
+			int pos = milistas.barajas[g].posHost;
+			int pos2 = milistas.barajas[g].posGuest;
+			if((strcmp(milistas.barajas[g].Host,nick) == 0) && milistas.barajas[g].rest == 0)
+			{
+				strcpy(turno, milistas.barajas[g].Guest);
+				sprintf(mensaje, "12/%s/%d/", turno,n);
+				write(milista.conectados[milistas.barajas[g].posGuest].socket, mensaje, strlen(mensaje));
+			}
+			else if((strcmp(milistas.barajas[g].Guest,nick) == 0) && milistas.barajas[g].rest == 0)
+			{
+				strcpy(turno, milistas.barajas[g].Host);
+				sprintf(mensaje, "12/%s/%d/", turno,n);
+				write(milista.conectados[milistas.barajas[g].posHost].socket, mensaje, strlen(mensaje));
+			}
+			milistas.barajas[g].rest++;
+			if(milistas.barajas[g].rest == 2)
+			{
+				while(milistas.barajas[g].totalCrup <= 17)
+				{
+					Carta mano_crupier[10];	
+					mano_crupier[milistas.barajas[g].indexCrup++] = milistas.barajas[g].cartas[milistas.barajas[g].carta_actual++];
+					milistas.barajas[g].totalCrup += mano_crupier[milistas.barajas[g].indexCrup].numero;
+					sprintf(mensaje, "14/%d/%s/%d/",mano_crupier[0].numero, mano_crupier[0].palo,n);
+					write(milista.conectados[pos].socket, mensaje, strlen(mensaje));
+					write(milista.conectados[pos2].socket, mensaje, strlen(mensaje));
+				}
+			}
+		}
+		else if (codigo == 14)
+		{
+			p = strtok(NULL, "/");
+			int g = atoi(p);
+			if(milistas.barajas[g].a != 2)
+			{
+				milistas.barajas[g].a++;
+				p = strtok(NULL, "/");
+				int n = atoi(p);
+				// Reiniciar la mano del crupier
+				milistas.barajas[g].totalCrup = 0;
+				milistas.barajas[g].indexCrup = 0;
+				Carta mano_crupier[10];			
+				int pos = milistas.barajas[g].posHost;
+				int pos2 = milistas.barajas[g].posGuest;
+				
+				if (milistas.barajas[g].carta_actual + 2 >= NUM_CARTAS) 
+				{
+					mezclarUltimaBaraja();
+					milistas.barajas[g].carta_actual = 0;
+				}
+				mano_crupier[milistas.barajas[g].indexCrup++] = milistas.barajas[g].cartas[milistas.barajas[g].carta_actual++];
+				mano_crupier[milistas.barajas[g].indexCrup++] = milistas.barajas[g].cartas[milistas.barajas[g].carta_actual++];
+				milistas.barajas[g].totalCrup = mano_crupier[0].numero + mano_crupier[1].numero;
+				char mensaje[100];
+				// Enviar al cliente las 2 cartas
+				sprintf(mensaje, "13/%d/%s/%d/%s/%d/",mano_crupier[0].numero, mano_crupier[0].palo,mano_crupier[1].numero, mano_crupier[1].palo,n);
+				// Formato: 7/1/host/guest - confirmacion de inicio de partida
+				printf("--------Confirmacion Invitacion------------\n Respuesta Invitacion - %s\n------------------------\n", mensaje);
+				if (pos != -1 && pos2 != -1) 
+				{
+					write(milista.conectados[pos].socket, mensaje, strlen(mensaje));
+					write(milista.conectados[pos2].socket, mensaje, strlen(mensaje));
+				}
 			}
 		}
 		// Envio de notificaciones a todos los usuarios conectados
@@ -387,6 +589,7 @@ void *AtenderCliente(void *socket) {
 				printf("---------Notificacion------------\n Notificacion - %s\n-------------------\n", notificacion);
 				write(sockets[j], notificacion, strlen(notificacion));
 			}
+			notificacion[0] = '\0';
 			conectados[0] = '\0';			
 		}
 	} // Fin del while
@@ -440,6 +643,14 @@ void Consulta(char* respt, char nick[25], int tipo) {
 		strcat(consulta, nick);
 		strcat(consulta, "'");
 	}
+	else if (tipo == 12)
+	{
+		strcpy(consulta, "SELECT * FROM DB_game WHERE PLAYER_HOST = '");
+		strcat(consulta, nick);
+		strcat(consulta, "' OR PLAYER_GUEST = '");
+		strcat(consulta, nick);
+		strcat(consulta, "'");
+	}
 	//Consulta tipo 12
 	err = mysql_query(conn, consulta);
 	if (err != 0) 
@@ -481,7 +692,11 @@ void Consulta(char* respt, char nick[25], int tipo) {
 			} 
 			else if (tipo == 11) 
 			{
-				sprintf(respt, "3/%s/%s/%s", row[0], row[1], row[2]); // Devuelve datos completos
+				sprintf(respt, "3/1/%s/%s/%s", row[0], row[1], row[2]); // Devuelve datos completos
+			}
+			else if (tipo == 12)
+			{
+				sprintf(respt, "3/2/%s/%s/%s/%f/%f/%s", row[0], row[1], row[2],row[3],row[4],row[5]);
 			}
 			row = mysql_fetch_row(resultado);
 		}
@@ -528,13 +743,15 @@ int Add(char nick[25], char pass[10], char* respt) {
 // Funcion principal del servidor
 int main(int argc, char *argv[]) {
 	int sock_conn, sock_listen, ret;
-	int puerto = 9080; // Puerto del servidor
+	int puerto = 50046; // Puerto del servidor
 	struct sockaddr_in serv_adr;
 	char respuesta[512];
 	char peticion[512];
+	srand(time(NULL));  // Semilla aleatoria
 	
 	milista.num = 0; // Inicializa la lista de conectados
 	mylist.num = 0;  // Inicializa la lista de juegos
+	milistas.num = 0;
 	
 	// Inicializaciones de red
 	if ((sock_listen = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
